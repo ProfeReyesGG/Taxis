@@ -1,7 +1,7 @@
 {
   "name": "Taxi Turicato",
   "short_name": "Taxi Turicato",
-  "description": "Sitios concesionados de Turicato y Puruarán: taxis verificados, efectivo, tarifas y seguridad.",
+  "description": "Taxis verificados de Turicato y Puruarán: solicitudes programadas, lugares compartidos y GPS manual.",
   "lang": "es-MX",
   "start_url": "/",
   "scope": "/",

@@ -60,7 +60,7 @@ function response(payload, status = 200, extraHeaders = {}) {
 }
 
 function value(input, length = 160) {
-  return typeof input === "string" ? input.trim().slice(0, length) : "";
+  return typeof input === "string" ? input.trim().normalize("NFC").slice(0, length) : "";
 }
 
 function number(input, fallback = 0) {
@@ -250,7 +250,8 @@ function driverOrganization(database, driver) {
   const insuranceValid = !database.settings.insurance_required || Boolean(
     driver.insurance_policy && driver.insurance_expiration && driver.insurance_expiration >= date().slice(0, 10),
   );
-  const documentsValid = Boolean(driver.license_number && driver.permit_number && insuranceValid);
+  const documentsValid = Boolean(driver.license_number && driver.permit_number && insuranceValid &&
+    driver.driver_photo_key && driver.vehicle_photo_key && (!site || site.photo_key));
   return {
     union,
     group,
@@ -261,8 +262,16 @@ function driverOrganization(database, driver) {
   };
 }
 
+function occupiedSeats(database, driverId, exceptRideId = null) {
+  if (!driverId) return 0;
+  return database.rides.filter((ride) => ride.id !== exceptRideId && ride.driver_id === driverId &&
+    ["accepted", "arrived", "in_progress"].includes(ride.status))
+    .reduce((total, ride) => total + Math.max(1, Math.round(number(ride.passengers, 1))), 0);
+}
+
 function enrichedDriver(database, driver, privateFields = false) {
   const { union, group, site, insuranceValid, documentsValid } = driverOrganization(database, driver);
+  const occupied = occupiedSeats(database, driver.id);
   const enriched = {
     ...driver,
     union_name: union?.name || "",
@@ -270,6 +279,8 @@ function enrichedDriver(database, driver, privateFields = false) {
     site_name: site?.name || "",
     insurance_valid: insuranceValid,
     documents_valid: documentsValid,
+    occupied_seats: occupied,
+    available_seats: Math.max(0, 4 - occupied),
     driver_photo_url: driver.driver_photo_key ? `/api/taxi?photo=${encodeURIComponent(driver.driver_photo_key)}` : "",
     vehicle_photo_url: driver.vehicle_photo_key ? `/api/taxi?photo=${encodeURIComponent(driver.vehicle_photo_key)}` : "",
   };
@@ -383,6 +394,7 @@ function visibleState(database, account) {
   let activity = [];
   let reports = [];
   let passengers = [];
+  let sharedOpportunities = [];
 
   if (account.role === "admin") {
     drivers = database.drivers.map((driver) => enrichedDriver(database, driver, true));
@@ -398,6 +410,7 @@ function visibleState(database, account) {
       const safe = enrichedRide(database, ride);
       delete safe.security_code;
       delete safe.route_events;
+      delete safe.manual_locations;
       if (!["requested", "accepted", "arrived", "in_progress"].includes(ride.status)) {
         delete safe.pickup_lat;
         delete safe.pickup_lng;
@@ -417,11 +430,14 @@ function visibleState(database, account) {
     drivers = [enrichedDriver(database, ownDriver, true)];
     rides = database.rides
       .filter((ride) => ride.driver_id === ownDriver.id ||
-        (database.settings.allow_driver_claim && ownDriver.status === "available" && ride.status === "requested" && ride.site_id === ownDriver.site_id))
+        (database.settings.allow_driver_claim && ride.status === "requested" && ride.site_id === ownDriver.site_id &&
+          (ownDriver.status === "available" || (ownDriver.status === "busy" &&
+            ride.share_requested_driver_id === ownDriver.id && occupiedSeats(database, ownDriver.id) < 4))))
       .map((ride) => {
         const safe = enrichedRide(database, ride);
         delete safe.security_code;
         delete safe.route_events;
+        delete safe.manual_locations;
         if (ride.driver_id !== ownDriver.id) {
           delete safe.passenger_email;
           delete safe.passenger_phone;
@@ -450,6 +466,7 @@ function visibleState(database, account) {
     rides = database.rides.filter((ride) => ride.passenger_email === account.email).map((ride) => {
       const safe = enrichedRide(database, ride);
       delete safe.route_events;
+      delete safe.manual_locations;
       if (!ACTIVE_RIDES.has(ride.status)) {
         delete safe.pickup_lat;
         delete safe.pickup_lng;
@@ -459,6 +476,23 @@ function visibleState(database, account) {
     sites = database.sites.filter((site) => site.active).map(publicSite);
     tariffs = database.tariffs.filter((tariff) => tariff.active && sites.some((site) => samePlace(site.town, tariff.town)));
     reports = database.reports.filter((report) => report.passenger_email === account.email);
+    const seen = new Set();
+    sharedOpportunities = database.rides.filter((ride) => ["accepted", "arrived", "in_progress"].includes(ride.status) && ride.driver_id)
+      .flatMap((ride) => {
+        if (seen.has(ride.driver_id)) return [];
+        seen.add(ride.driver_id);
+        const driver = database.drivers.find((item) => item.id === ride.driver_id);
+        const available = Math.max(0, 4 - occupiedSeats(database, ride.driver_id));
+        if (!driver?.active || !driver.verified || !driverOrganization(database, driver).operational || !available) return [];
+        return [{
+          ride_id: ride.id,
+          driver_id: driver.id,
+          site_id: ride.site_id,
+          destination_label: ride.destination_label,
+          arrival_point: ride.arrival_point,
+          available_seats: available,
+        }];
+      });
   }
 
   rides.sort((first, second) => {
@@ -479,6 +513,7 @@ function visibleState(database, account) {
     drivers,
     rides,
     passengers,
+    shared_opportunities: sharedOpportunities,
     reports,
     activity,
     audit_log: account.role === "admin" ? database.activity : [],
@@ -496,6 +531,7 @@ function visibleState(database, account) {
       destination_label: ride.destination_label,
       destination_lat: ride.destination_lat ?? null,
       destination_lng: ride.destination_lng ?? null,
+      manual_locations: ride.manual_locations || [],
       events: ride.route_events || [],
       created_at: ride.created_at,
       status: ride.status,
@@ -643,8 +679,12 @@ async function persistPhoto(account, payload, allowedKinds) {
 
 async function uploadPhoto(database, account, payload) {
   const allowed = account.role === "admin" ? ["driver", "vehicle", "site"] :
-    account.role === "passenger" ? ["passenger", "pickup"] : [];
-  if (!allowed.length) throw new AppError("Tu cuenta no puede subir este tipo de fotografía.", 403);
+    account.role === "passenger" ? ["passenger", "pickup"] :
+    account.role === "driver" ? ["driver", "vehicle"] :
+    account.role === "site" ? ["site"] : [];
+  if (!allowed.length || !allowed.includes(payload.kind)) {
+    throw new AppError("Tu cuenta no puede subir este tipo de fotografía.", 403);
+  }
   return response({ ok: true, ...(await persistPhoto(account, payload, allowed)) }, 201);
 }
 
@@ -777,11 +817,31 @@ function performAction(database, account, action, payload) {
     }
     if (currentAccount.role === "driver") {
       const driver = database.drivers.find((item) => item.email === currentAccount.email);
-      if (driver) { driver.name = name; driver.phone = phone; }
+      if (driver) {
+        driver.name = name;
+        driver.phone = phone;
+        if (payload.driverPhotoKey) {
+          const key = value(payload.driverPhotoKey, 80);
+          if (!/^driver\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(key)) throw new AppError("La fotografía del taxista no es válida.");
+          driver.driver_photo_key = key;
+        }
+        if (payload.vehiclePhotoKey) {
+          const key = value(payload.vehiclePhotoKey, 80);
+          if (!/^vehicle\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(key)) throw new AppError("La fotografía del taxi no es válida.");
+          driver.vehicle_photo_key = key;
+        }
+      }
     }
     if (currentAccount.role === "site") {
       const site = database.sites.find((item) => item.id === currentAccount.site_id);
-      if (site) site.phone = phone;
+      if (site) {
+        site.phone = phone;
+        if (payload.sitePhotoKey) {
+          const key = value(payload.sitePhotoKey, 80);
+          if (!/^site\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(key)) throw new AppError("La fotografía del sitio no es válida.");
+          site.photo_key = key;
+        }
+      }
     }
     record(database, currentAccount.email, "profile_updated", `Se actualizaron datos del perfil ${currentAccount.role}.`, currentAccount.id);
     return;
@@ -852,6 +912,10 @@ function performAction(database, account, action, payload) {
       address: value(payload.address, 160),
       union_id: unionId || null,
       manager_name: value(payload.managerName, 90) || name,
+      legal_name: value(payload.legalName, 160),
+      legal_representative: value(payload.legalRepresentative, 100),
+      legal_address: value(payload.legalAddress, 180),
+      representative_role: value(payload.representativeRole, 90),
       eta_default_minutes: Math.max(1, Math.min(120, Math.round(number(payload.etaMinutes, database.settings.default_eta_minutes)))),
       photo_key: photoKey,
       dispatch_start: validTime(payload.dispatchStart, database.settings.site_dispatch_start),
@@ -911,6 +975,11 @@ function performAction(database, account, action, payload) {
     site.phone = value(payload.phone ?? site.phone, 20).replace(/[^\d+\s()-]/g, "");
     site.address = value(payload.address ?? site.address, 160);
     if (currentAccount.role === "admin") {
+      site.manager_name = value(payload.managerName ?? site.manager_name, 90) || site.name;
+      site.legal_name = value(payload.legalName ?? site.legal_name, 160);
+      site.legal_representative = value(payload.legalRepresentative ?? site.legal_representative, 100);
+      site.legal_address = value(payload.legalAddress ?? site.legal_address, 180);
+      site.representative_role = value(payload.representativeRole ?? site.representative_role, 90);
       site.dispatch_start = validTime(payload.dispatchStart, site.dispatch_start || database.settings.site_dispatch_start);
       site.dispatch_end = validTime(payload.dispatchEnd, site.dispatch_end || database.settings.site_dispatch_end);
       site.base_lat = optionalCoordinate(payload.baseLat ?? site.base_lat, 90);
@@ -920,6 +989,8 @@ function performAction(database, account, action, payload) {
         if (!/^site\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(key)) throw new AppError("La fotografía del sitio no es válida.");
         site.photo_key = key;
       }
+      const manager = database.users.find((item) => item.role === "site" && item.site_id === site.id);
+      if (manager) manager.name = site.manager_name;
     }
     record(database, currentAccount.email, "site_settings", `Se actualizó la operación de ${site.name}.`, site.id);
     return;
@@ -1205,25 +1276,45 @@ function performAction(database, account, action, payload) {
     const adults = Math.max(1, Math.round(number(payload.adultPassengers ?? payload.passengers, 1)));
     const children = Math.max(0, Math.round(number(payload.childPassengers, 0)));
     if (adults + children > 4) throw new AppError("Todas las personas, incluidos menores, ocupan una plaza; no excedas cuatro pasajeros.");
+    const scheduleText = value(payload.scheduledAt, 40);
+    const scheduledTimestamp = scheduleText ? Date.parse(scheduleText) : null;
+    if (scheduleText && (!Number.isFinite(scheduledTimestamp) || scheduledTimestamp < Date.now() + 2 * 60_000 ||
+      scheduledTimestamp > Date.now() + 30 * 24 * 60 * 60_000)) {
+      throw new AppError("Programa una hora futura, con al menos dos minutos de anticipación y no más de 30 días.");
+    }
+    const shareRideId = value(payload.shareRideId, 64);
+    const sharedParent = shareRideId ? database.rides.find((ride) => ride.id === shareRideId) : null;
+    if (shareRideId && (!sharedParent?.driver_id || !["accepted", "arrived", "in_progress"].includes(sharedParent.status) ||
+      sharedParent.site_id !== site.id || !samePlace(sharedParent.destination_label, destinationLabel))) {
+      throw new AppError("La unidad compartida ya no está disponible para ese sitio y destino.", 409);
+    }
+    if (sharedParent) {
+      const available = Math.max(0, 4 - occupiedSeats(database, sharedParent.driver_id));
+      if (adults + children > available) {
+        throw new AppError(available ? `La unidad compartida solo tiene ${available} ${available === 1 ? "lugar disponible" : "lugares disponibles"}.` :
+          "La unidad compartida ya no tiene lugares disponibles.", 409);
+      }
+      if (scheduleText) throw new AppError("Los lugares compartidos disponibles solo pueden solicitarse para salida inmediata.");
+    }
     if (children && payload.childSafetyAccepted !== true) {
       throw new AppError("Confirma que los menores viajarán en el asiento trasero, con cinturón o sistema de retención apropiado; nunca en las piernas.");
     }
     const seniorPassengers = Math.max(0, Math.min(adults, Math.round(number(payload.seniorPassengers, currentAccount.senior_discount_eligible ? 1 : 0))));
     const studentPassengers = Math.max(0, Math.min(adults - seniorPassengers, Math.round(number(payload.studentPassengers, 0))));
     const priceMode = tariff?.price_mode || "person";
-    const unitFare = tariff ? number(tariff.service_fare, 0) : database.settings.special_max_per_person;
-    const serviceFare = Math.round(unitFare * (priceMode === "person" ? adults : 1) * 100) / 100;
+    const unitFare = tariff ? number(tariff.service_fare, 0) : null;
+    const serviceFare = tariff ? Math.round(unitFare * (priceMode === "person" ? adults : 1) * 100) / 100 : null;
     const pickupFee = number(tariff?.pickup_fee, database.settings.pickup_fee);
-    const seniorDiscount = database.settings.discounts_authorized ? seniorPassengers * database.settings.senior_discount : 0;
-    const studentDiscount = database.settings.discounts_authorized ? studentPassengers * number(tariff?.student_discount, database.settings.student_discount) : 0;
+    const seniorDiscount = tariff && database.settings.discounts_authorized ? seniorPassengers * database.settings.senior_discount : 0;
+    const studentDiscount = tariff && database.settings.discounts_authorized ? studentPassengers * number(tariff?.student_discount, database.settings.student_discount) : 0;
     if (database.settings.discounts_authorized && unitFare > 0 && priceMode === "person") {
       const individualDiscounts = [seniorPassengers ? database.settings.senior_discount : 0, studentPassengers ? number(tariff?.student_discount, database.settings.student_discount) : 0].filter(Boolean);
       if (individualDiscounts.some((amount) => amount + 0.001 < unitFare * .1 || amount - 0.001 > unitFare * .5)) {
         throw new AppError("El descuento configurado no está dentro del rango preferencial permitido para esta tarifa; solicita revisión de la administración.");
       }
     }
-    const discount = Math.min(serviceFare, Math.round((seniorDiscount + studentDiscount) * 100) / 100);
-    const fare = Math.round((serviceFare + pickupFee - discount) * 100) / 100;
+    const discount = tariff ? Math.min(serviceFare, Math.round((seniorDiscount + studentDiscount) * 100) / 100) : 0;
+    const fare = tariff ? Math.round((serviceFare + pickupFee - discount) * 100) / 100 : null;
     const pickupPhotoKey = value(payload.pickupPhotoKey, 80);
     if (pickupPhotoKey && !/^pickup\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(pickupPhotoKey)) throw new AppError("La fotografía de la fachada no es válida.");
     const ride = {
@@ -1238,15 +1329,20 @@ function performAction(database, account, action, payload) {
       price_mode: priceMode, unit_fare: unitFare, special_route: !tariff, price_requires_confirmation: !tariff,
       discount_amount: discount, senior_discount: seniorDiscount, student_discount: studentDiscount,
       distance_km: null, estimated_fare: fare, final_fare: null, status: "requested",
-      eta_minutes: tariff?.eta_minutes || site.eta_default_minutes, eta_assigned_at: null, assigned_by: null,
+      eta_minutes: null, eta_assigned_at: null, assigned_by: null,
+      scheduled_at: scheduledTimestamp ? new Date(scheduledTimestamp).toISOString() : null,
+      share_parent_id: sharedParent?.id || null,
+      share_requested_driver_id: sharedParent?.driver_id || null,
+      shared_service: Boolean(sharedParent),
       payment_method: "cash", passengers: adults + children, adult_passengers: adults,
       child_passengers: children, senior_passengers: seniorPassengers, student_passengers: studentPassengers,
       child_tariff_max_age: database.settings.child_free_max_age,
       notes: value(payload.notes, 240), security_code: String(randomInt(1000, 10000)), rating: null,
       safety_accepted_at: date(), route_events: [],
+      manual_locations: [{ latitude: pickupLat, longitude: pickupLng, label: pickupLabel, recorded_at: date(), kind: "initial" }],
       created_at: date(), updated_at: date(), accepted_at: null, completed_at: null,
     };
-    routeEvent(ride, currentAccount.email, "requested", `Ubicación de recogida registrada una sola vez; sitio ${site.name}.`);
+    routeEvent(ride, currentAccount.email, "requested", `Ubicación de recogida registrada de forma manual; sitio ${site.name}.${sharedParent ? " Se solicitó un lugar compartido." : ""}`);
     database.rides.unshift(ride);
     record(database, currentAccount.email, "ride_requested", `${site.name}: se solicitó ${ride.folio}, ${pickupLabel} → ${destinationLabel}.`, ride.id);
     return { id: ride.id, folio: ride.folio };
@@ -1264,9 +1360,18 @@ function performAction(database, account, action, payload) {
     if (currentAccount.role === "site" && ride.site_id !== currentAccount.site_id) {
       throw new AppError("Este servicio pertenece a otro sitio de taxis.", 403);
     }
-    if (!driver?.active || !driver.verified || driver.status !== "available" || !driverOrganization(database, driver).operational ||
-      driver.site_id !== ride.site_id) {
+    const sharedAssignment = Boolean(driver && ride.share_requested_driver_id === driver.id);
+    if (ride.share_requested_driver_id && !sharedAssignment) {
+      throw new AppError("Este lugar compartido corresponde a la unidad que ya circula hacia ese destino.", 409);
+    }
+    if (!driver?.active || !driver.verified || !(driver.status === "available" || (sharedAssignment && driver.status === "busy")) ||
+      !driverOrganization(database, driver).operational || driver.site_id !== ride.site_id) {
       throw new AppError("La unidad debe estar disponible, asegurada, autorizada y pertenecer al mismo sitio.", 409);
+    }
+    const available = Math.max(0, 4 - occupiedSeats(database, driver.id));
+    if (ride.passengers > available) {
+      throw new AppError(available ? `La unidad solo dispone de ${available} ${available === 1 ? "lugar" : "lugares"}; no es posible exceder su capacidad.` :
+        "La unidad ya no tiene lugares disponibles.", 409);
     }
     if (currentAccount.role === "driver" && !database.settings.allow_driver_claim) {
       throw new AppError("La administración desactivó temporalmente la toma directa de solicitudes.", 403);
@@ -1301,10 +1406,20 @@ function performAction(database, account, action, payload) {
     }
     ride.unit_fare = Math.round(perPerson * 100) / 100;
     ride.service_fare = Math.round(ride.unit_fare * ride.adult_passengers * 100) / 100;
-    ride.discount_amount = Math.min(ride.service_fare, number(ride.discount_amount, 0));
+    ride.senior_discount = database.settings.discounts_authorized ? ride.senior_passengers * database.settings.senior_discount : 0;
+    ride.student_discount = database.settings.discounts_authorized ? ride.student_passengers * database.settings.student_discount : 0;
+    if (database.settings.discounts_authorized && ride.unit_fare > 0) {
+      const individualDiscounts = [ride.senior_passengers ? database.settings.senior_discount : 0,
+        ride.student_passengers ? database.settings.student_discount : 0].filter(Boolean);
+      if (individualDiscounts.some((amount) => amount + .001 < ride.unit_fare * .1 || amount - .001 > ride.unit_fare * .5)) {
+        throw new AppError("El descuento preferencial debe representar entre 10% y 50% de la tarifa autorizada.");
+      }
+    }
+    ride.discount_amount = Math.min(ride.service_fare, Math.round((ride.senior_discount + ride.student_discount) * 100) / 100);
     ride.estimated_fare = Math.round((ride.service_fare + ride.pickup_fee - ride.discount_amount) * 100) / 100;
     ride.price_requires_confirmation = false;
     ride.price_confirmed_by = currentAccount.email;
+    ride.destination_validated_at = date();
     ride.updated_at = date();
     routeEvent(ride, currentAccount.email, "special_price", `Salida especial confirmada: ${ride.unit_fare} por persona.`);
     record(database, currentAccount.email, "special_fare_confirmed", `Se confirmó ${ride.unit_fare} por persona para ${ride.folio}.`, ride.id);
@@ -1315,12 +1430,36 @@ function performAction(database, account, action, payload) {
     const ride = database.rides.find((item) => item.id === value(payload.rideId, 64));
     if (!ride) throw new AppError("No encontramos ese servicio.", 404);
     requireSiteOrAdmin(database, currentAccount, ride.site_id);
-    if (!["requested", "accepted", "arrived"].includes(ride.status)) throw new AppError("El tiempo de llegada ya no puede actualizarse.", 409);
+    if (!["accepted", "arrived"].includes(ride.status) || !ride.driver_id) {
+      throw new AppError("Primero debe asignarse un taxista para informar el tiempo de llegada.", 409);
+    }
     ride.eta_minutes = Math.max(1, Math.min(180, Math.round(number(payload.etaMinutes, ride.eta_minutes))));
     ride.eta_assigned_at = date();
     ride.updated_at = ride.eta_assigned_at;
     routeEvent(ride, currentAccount.email, "eta_updated", `Nuevo tiempo estimado: ${ride.eta_minutes} minutos.`);
     record(database, currentAccount.email, "eta_updated", `Se informó una llegada de ${ride.eta_minutes} minutos para ${ride.folio}.`, ride.id);
+    return;
+  }
+
+  if (action === "updateRideLocation") {
+    if (currentAccount.role !== "passenger") throw new AppError("Solo la persona pasajera puede actualizar manualmente su ubicación.", 403);
+    const ride = database.rides.find((item) => item.id === value(payload.rideId, 64) && item.passenger_email === currentAccount.email);
+    if (!ride || !ACTIVE_RIDES.has(ride.status)) throw new AppError("Solo puedes actualizar la ubicación de tu servicio activo.", 409);
+    const latitude = number(payload.pickupLat, NaN);
+    const longitude = number(payload.pickupLng, NaN);
+    if (![latitude, longitude].every(Number.isFinite) || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
+      throw new AppError("No se recibió una ubicación GPS válida.");
+    }
+    ride.pickup_lat = latitude;
+    ride.pickup_lng = longitude;
+    const label = value(payload.pickupLabel, 120);
+    if (label) ride.pickup_label = label;
+    ride.location_updated_at = date();
+    ride.updated_at = ride.location_updated_at;
+    if (!Array.isArray(ride.manual_locations)) ride.manual_locations = [];
+    ride.manual_locations.push({ latitude, longitude, label: ride.pickup_label, recorded_at: ride.location_updated_at, kind: "manual" });
+    routeEvent(ride, currentAccount.email, "location_updated", "La persona pasajera actualizó su ubicación manualmente; no se activó rastreo continuo.");
+    record(database, currentAccount.email, "ride_location_updated", `Se actualizó de forma puntual la ubicación de ${ride.folio}.`, ride.id);
     return;
   }
 
@@ -1339,7 +1478,7 @@ function performAction(database, account, action, payload) {
       ride.completed_at = ride.updated_at;
       ride.final_fare = ride.estimated_fare;
       driver.completed_trips += 1;
-      driver.status = "available";
+      driver.status = occupiedSeats(database, driver.id) ? "busy" : "available";
     }
     const messages = { arrived: "La unidad llegó al punto de partida.", in_progress: "Se verificó el código y comenzó el viaje.", completed: "El viaje se completó correctamente." };
     routeEvent(ride, currentAccount.email, next, messages[next]);
@@ -1358,7 +1497,7 @@ function performAction(database, account, action, payload) {
     if (!["requested", "accepted", "arrived"].includes(ride.status)) throw new AppError("Este viaje ya no puede cancelarse.", 409);
     ride.status = "cancelled";
     ride.updated_at = date();
-    if (driver?.active) driver.status = "available";
+    if (driver?.active) driver.status = occupiedSeats(database, driver.id) ? "busy" : "available";
     routeEvent(ride, currentAccount.email, "cancelled", "Servicio cancelado sin rastreo continuo.");
     record(database, currentAccount.email, "ride_cancelled", `Se canceló el viaje ${ride.folio}.`, ride.id);
     return;
@@ -1498,7 +1637,30 @@ export default async function handler(request) {
 
     if (request.method === "GET") {
       if (address.searchParams.get("public") === "legal") {
-        return response({ ok: true, settings: publicLegalSettings(database.settings) });
+        const siteId = value(address.searchParams.get("site"), 64);
+        if (!siteId) return response({ ok: true, settings: publicLegalSettings(database.settings) });
+        const legalAccount = signedInAccount(request, database, configuration);
+        if (!legalAccount || !(legalAccount.role === "admin" ||
+          (legalAccount.role === "site" && legalAccount.site_id === siteId))) {
+          throw new AppError("Solo administración y el sitio correspondiente pueden consultar este acuerdo personalizado.", 403);
+        }
+        const site = database.sites.find((item) => item.id === siteId);
+        if (!site) throw new AppError("No encontramos el sitio de este acuerdo.", 404);
+        const union = database.unions.find((item) => item.id === site.union_id);
+        return response({ ok: true, settings: publicLegalSettings(database.settings), site: {
+          id: site.id,
+          name: site.name,
+          town: site.town,
+          address: site.address,
+          manager_name: site.manager_name,
+          legal_name: site.legal_name || site.name,
+          legal_representative: site.legal_representative || site.manager_name,
+          legal_address: site.legal_address || site.address,
+          representative_role: site.representative_role || "Representante del sitio",
+          union_name: union?.name || "Sin sindicato especificado",
+          email: site.email,
+          phone: site.phone,
+        } });
       }
       const account = signedInAccount(request, database, configuration);
       if (address.searchParams.has("photo")) {
@@ -1527,11 +1689,14 @@ export default async function handler(request) {
 
     if (action === "uploadPhoto") return await uploadPhoto(database, account, payload);
 
-    const photoReference = action === "createRide" ? payload.pickupPhotoKey : action === "saveProfile" ? payload.profilePhotoKey : null;
-    if (photoReference && account.role === "passenger") {
-      const uploaded = await mediaStore().getWithMetadata(value(photoReference, 80), { type: "arrayBuffer", consistency: "strong" });
-      if (!uploaded || uploaded.metadata?.uploadedBy !== account.email) {
-        throw new AppError("La fotografía seleccionada no pertenece a tu cuenta.", 403);
+    const photoReferences = action === "createRide" ? [payload.pickupPhotoKey] : action === "saveProfile" ?
+      [payload.profilePhotoKey, payload.driverPhotoKey, payload.vehiclePhotoKey, payload.sitePhotoKey] : [];
+    if (account.role !== "admin") {
+      for (const reference of photoReferences.filter(Boolean)) {
+        const uploaded = await mediaStore().getWithMetadata(value(reference, 80), { type: "arrayBuffer", consistency: "strong" });
+        if (!uploaded || uploaded.metadata?.uploadedBy !== account.email) {
+          throw new AppError("La fotografía seleccionada no pertenece a tu cuenta.", 403);
+        }
       }
     }
 
