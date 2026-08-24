@@ -1,0 +1,1319 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#134738">
+    <meta name="description" content="Solicita taxis autorizados en Turicato, Michoacán. Sindicatos registrados, taxistas verificados y viajes seguros.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Taxi Turicato">
+    <meta property="og:title" content="Taxi Turicato">
+    <meta property="og:description" content="Viaja tranquilo. Llega seguro.">
+    <meta property="og:image" content="/og.png">
+    <title>Taxi Turicato</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <style>
+:root {
+  color-scheme: light;
+  --forest: #134738;
+  --forest-deep: #103c30;
+  --forest-soft: #eaf3ee;
+  --lime: #bbf171;
+  --orange: #f07c4d;
+  --cream: #f7f6f2;
+  --surface: #fff;
+  --ink: #192420;
+  --muted: #77807a;
+  --line: #e8e9e4;
+  --shadow: 0 24px 70px rgb(29 47 37 / 8%);
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--cream); color: var(--ink); }
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+.welcome-shell { width: min(1240px, 100%); min-height: 100dvh; margin: 0 auto; padding: 28px 52px 20px; display: flex; flex-direction: column; }
+.welcome-topbar { display: flex; justify-content: space-between; align-items: center; }
+.brand { display: inline-flex; align-items: center; gap: 12px; }
+.brand-symbol { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 12px; background: var(--forest); color: var(--lime); font-size: 26px; font-weight: 850; }
+.brand-copy { display: grid; gap: 2px; }
+.brand-copy strong { font-size: 15px; }
+.brand-copy small { color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: 1.7px; }
+.verified-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid #d9e4dc; border-radius: 999px; color: var(--forest); font-size: 12px; font-weight: 600; }
+.verified-pill span { width: 7px; height: 7px; border-radius: 50%; background: #48ae73; }
+.welcome-grid { display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: 84px; flex: 1; }
+.eyebrow, .access-heading > span { color: var(--forest); font-size: 10px; font-weight: 800; letter-spacing: 2px; }
+.welcome-copy h1 { max-width: 570px; margin: 22px 0 17px; font-size: clamp(48px, 6vw, 82px); line-height: .99; letter-spacing: -5px; }
+.welcome-copy h1 em { color: var(--forest); font-style: normal; }
+.welcome-copy > p { max-width: 440px; color: var(--muted); font-size: 16px; line-height: 1.75; }
+.feature-row { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 30px; color: var(--forest); font-size: 12px; font-weight: 650; }
+.access-card { padding: 34px; border: 1px solid #eceeea; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
+.access-heading h2 { margin: 11px 0 26px; font-size: 25px; letter-spacing: -.7px; }
+.gate-list { display: grid; gap: 10px; }
+.gate-choice { display: flex; align-items: center; gap: 13px; min-height: 58px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; text-align: left; font-size: 14px; font-weight: 650; }
+.gate-choice.is-selected { border-color: var(--forest); background: var(--forest-soft); }
+.gate-icon { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 9px; background: #f3f4f1; color: var(--forest); }
+.gate-choice.is-selected .gate-icon { background: #dceae1; }
+.gate-arrow { margin-left: auto; color: var(--muted); }
+.primary-button { display: flex; align-items: center; justify-content: space-between; min-height: 52px; border: 0; border-radius: 12px; background: var(--forest); color: white; font-size: 13px; font-weight: 700; }
+.access-button { padding: 0 15px; margin-top: 21px; }
+.access-note { margin: 15px 0 0; color: var(--muted); text-align: center; font-size: 11px; line-height: 1.5; }
+.welcome-footer { display: flex; justify-content: space-between; padding-top: 22px; color: var(--muted); font-size: 11px; }
+.gate-label { display: grid; gap: 3px; }
+.gate-label strong { font-size: 13px; }
+.gate-label small { color: var(--muted); font-size: 10px; font-weight: 450; }
+
+/* Authenticated application shell */
+.app-shell { min-height: 100dvh; }
+.app-sidebar { position: fixed; z-index: 15; inset: 0 auto 0 0; display: flex; width: 254px; flex-direction: column; padding: 24px 17px 15px; border-right: 1px solid var(--line); background: #fff; }
+.sidebar-top { display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding-left: 4px; }
+.sidebar-close { display: none; }
+.sidebar-role { display: grid; gap: 4px; margin: 31px 0 12px 8px; }
+.sidebar-role span, .sidebar-separator { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: 1.25px; }
+.sidebar-role small { color: #62a270; font-size: 8px; font-weight: 750; letter-spacing: .8px; }
+.sidebar-nav { display: grid; align-content: start; gap: 4px; overflow-y: auto; }
+.sidebar-separator { display: block; padding: 18px 8px 8px; }
+.nav-link { display: flex; width: 100%; min-height: 42px; align-items: center; gap: 11px; padding: 0 10px; border: 0; border-radius: 9px; background: transparent; color: #626b66; text-align: left; font-size: 12px; font-weight: 580; }
+.nav-link:hover { background: #f4f6f3; }
+.nav-link.nav-active { background: var(--forest-soft); color: var(--forest); font-weight: 760; }
+.nav-badge { display: grid; min-width: 20px; height: 20px; margin-left: auto; place-items: center; border-radius: 50%; background: var(--forest); color: white; font-size: 10px; }
+.sidebar-support { margin-top: auto; padding: 14px 11px 13px; border: 1px solid #e9eee9; border-radius: 12px; background: #f7faf7; }
+.sidebar-support > span { display: inline-flex; align-items: center; gap: 6px; color: var(--forest); font-size: 8px; font-weight: 800; letter-spacing: .7px; }
+.sidebar-support p { margin: 10px 0; color: var(--ink); font-size: 12px; font-weight: 650; line-height: 1.55; }
+.sidebar-support a { display: inline-flex; align-items: center; gap: 5px; color: var(--forest); font-size: 10px; }
+.sidebar-logout { display: flex; min-height: 46px; align-items: center; gap: 10px; padding-left: 9px; margin-top: 7px; color: var(--muted); font-size: 12px; }
+.app-main { min-height: 100dvh; margin-left: 254px; }
+.app-header { position: sticky; z-index: 8; top: 0; display: flex; height: 70px; justify-content: space-between; align-items: center; padding: 0 37px; border-bottom: 1px solid var(--line); background: rgb(247 246 242 / 93%); backdrop-filter: blur(14px); }
+.header-location { display: inline-flex; align-items: center; gap: 8px; color: #606a64; font-size: 12px; }
+.header-location svg { color: var(--forest); }
+.header-actions { display: flex; align-items: center; gap: 18px; }
+.service-badge { display: inline-flex; align-items: center; gap: 7px; color: var(--forest); font-size: 11px; font-weight: 600; }
+.service-badge > span, .availability-note > span, .live-indicator > span { width: 7px; height: 7px; border-radius: 50%; background: #4daf71; box-shadow: 0 0 0 4px rgb(77 175 113 / 12%); }
+.service-paused { color: #a76139; }
+.service-paused > span { background: var(--orange); }
+.header-user { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: transparent; font-size: 12px; font-weight: 630; }
+.avatar { display: grid; width: 45px; height: 45px; flex: none; place-items: center; border-radius: 13px; background: #e4ebe4; color: var(--forest); font-size: 15px; font-weight: 800; }
+.avatar-small { width: 33px; height: 33px; border-radius: 10px; font-size: 11px; }
+.app-content { width: min(1180px, 100%); margin: 0 auto; padding: 38px 37px 56px; }
+.content-section { animation: section-in .18s ease-out; }
+@keyframes section-in { from { opacity: .72; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+.section-title { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 26px; }
+.section-eyebrow { color: var(--forest); font-size: 9px; font-weight: 800; letter-spacing: 1.55px; }
+.section-title h1 { margin: 8px 0 5px; font-size: clamp(26px, 3.1vw, 35px); font-weight: 760; letter-spacing: -1.3px; }
+.section-title p { max-width: 570px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.section-actions { flex: none; }
+.top-action { justify-content: center; gap: 8px; min-height: 43px; padding: 0 14px; font-size: 11px; }
+.secondary-button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink); font-size: 11px; font-weight: 670; }
+.secondary-button:disabled, .primary-button:disabled, .quick-chip:disabled { cursor: not-allowed; opacity: .5; }
+.button-pair { display: flex; gap: 8px; }
+.mobile-menu-button, .mobile-bottom-nav, .sidebar-overlay { display: none; }
+
+/* Dashboard */
+.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.metric-card { min-height: 135px; padding: 16px; border: 1px solid #e9eae6; border-radius: 13px; background: #fff; }
+.metric-card > span { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 8px; font-weight: 760; letter-spacing: .45px; }
+.metric-card > span svg { width: 15px; height: 15px; color: var(--forest); }
+.metric-card > strong { display: block; margin-top: 18px; font-size: 27px; letter-spacing: -1px; }
+.metric-card > strong small { color: var(--muted); font-size: 12px; font-weight: 500; }
+.metric-card > p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+.metric-highlight { background: var(--forest); color: white; }
+.metric-highlight > span, .metric-highlight > p { color: #cfe4d9; }
+.metric-highlight > span svg { color: var(--lime); }
+.setup-guide { display: flex; justify-content: space-between; gap: 22px; padding: 19px 21px; margin-top: 17px; border: 1px solid #e4e9e2; border-radius: 13px; background: #fff; }
+.setup-guide > div:first-child > span { color: var(--forest); font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+.setup-guide > div:first-child h2 { margin: 7px 0 0; font-size: 17px; letter-spacing: -.3px; }
+.setup-guide > div:last-child { display: grid; min-width: 300px; gap: 7px; }
+.setup-guide button { display: flex; min-height: 32px; align-items: center; gap: 9px; padding: 0 4px; border: 0; background: transparent; text-align: left; font-size: 11px; }
+.setup-guide button > span { display: grid; width: 19px; height: 19px; place-items: center; border: 1px solid #d9dfd8; border-radius: 50%; color: var(--forest); font-size: 9px; }
+.setup-guide button > svg { margin-left: auto; color: var(--muted); }
+.setup-guide .setup-step-done { color: var(--muted); text-decoration: line-through; }
+.setup-guide .setup-step-done > span { border-color: #a8d4b5; background: #ecf7ef; text-decoration: none; }
+.overview-lower { display: grid; grid-template-columns: 1.25fr .75fr; gap: 15px; margin-top: 18px; }
+.overview-map-card, .activity-card { min-height: 383px; padding: 16px; border: 1px solid #e9eae6; border-radius: 13px; background: white; }
+.subsection-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px; }
+.subsection-heading h2 { margin: 0; font-size: 15px; letter-spacing: -.2px; }
+.subsection-heading p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+.live-indicator { display: inline-flex; align-items: center; gap: 8px; color: var(--forest); font-size: 9px; font-weight: 800; letter-spacing: .6px; }
+.activity-list { display: grid; gap: 2px; }
+.activity-item { display: flex; gap: 10px; padding: 11px 0; border-bottom: 1px solid #f0f1ed; }
+.activity-item:last-child { border-bottom: 0; }
+.activity-bullet { width: 9px; height: 9px; flex: none; margin-top: 4px; border-radius: 50%; background: #62a270; }
+.activity-driver { background: #537dd5; }
+.activity-organization { background: #d58237; }
+.activity-ride { background: #9556a1; }
+.activity-item p { margin: 0; font-size: 10px; line-height: 1.5; }
+.activity-item small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+.overview-rides { margin-top: 25px; }
+.link-button { display: inline-flex; align-items: center; gap: 3px; border: 0; background: transparent; color: var(--forest); font-size: 11px; font-weight: 650; }
+
+/* Interactive map */
+.taxi-map { position: relative; min-width: 0; height: 590px; overflow: hidden; border: 1px solid #e0e3dc; border-radius: 14px; background: #e6eae1; }
+.taxi-map-compact { height: 308px; border-radius: 10px; }
+.map-canvas { position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
+.map-canvas:active { cursor: grabbing; }
+.map-tile { position: absolute; width: 256px; height: 256px; max-width: none; pointer-events: none; }
+.route-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.map-pin { position: absolute; z-index: 2; display: grid; width: 35px; height: 35px; place-items: center; border: 3px solid white; border-radius: 12px 12px 12px 2px; box-shadow: 0 4px 16px rgb(0 0 0 / 24%); transform: translate(-50%, -82%) rotate(-45deg); }
+.map-pin span { color: #fff; font-size: 12px; font-weight: 800; transform: rotate(45deg); }
+.map-pin-pickup { background: var(--forest); }
+.map-pin-destination { background: var(--orange); }
+.map-zoom-control { position: absolute; z-index: 3; top: 13px; right: 13px; display: grid; overflow: hidden; border: 1px solid #dedfd9; border-radius: 9px; background: white; box-shadow: 0 3px 10px rgb(0 0 0 / 8%); }
+.map-zoom-control button { width: 34px; height: 34px; border: 0; background: white; color: var(--ink); font-size: 19px; }
+.map-zoom-control button + button { border-top: 1px solid #ecece8; }
+.map-selection-hint { position: absolute; z-index: 3; bottom: 31px; left: 50%; display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 999px; background: white; box-shadow: 0 5px 20px rgb(0 0 0 / 12%); color: var(--ink); font-size: 10px; white-space: nowrap; transform: translateX(-50%); }
+.hint-dot-green, .hint-dot-orange { width: 8px; height: 8px; border-radius: 50%; background: var(--forest); }
+.hint-dot-orange { background: var(--orange); }
+.map-attribution { position: absolute; z-index: 3; right: 0; bottom: 0; padding: 3px 6px; background: rgb(255 255 255 / 84%); color: #415746; font-size: 8px; }
+
+/* Passenger request and active ride */
+.passenger-layout { display: grid; grid-template-columns: minmax(300px, .88fr) minmax(350px, 1.12fr); align-items: start; gap: 16px; }
+.ride-builder, .ride-live-panel, .driver-active-card { padding: 18px; border: 1px solid #e9eae6; border-radius: 14px; background: white; }
+.builder-route { display: grid; gap: 8px; }
+.location-input-row { display: flex; width: 100%; min-height: 68px; align-items: center; gap: 11px; padding: 0 11px; border: 1px solid var(--line); border-radius: 10px; background: #fff; text-align: left; }
+.location-input-row.location-focused { border-color: #96b3a2; background: #f8faf8; }
+.location-input-row > span:nth-child(2) { display: grid; min-width: 0; flex: 1; gap: 4px; }
+.location-input-row > span:nth-child(2) > small { color: var(--muted); font-size: 8px; font-weight: 760; letter-spacing: .7px; }
+.location-input-row input { width: 100%; padding: 0; border: 0; outline: none; background: transparent; font-size: 11px; }
+.location-input-row > svg, .location-gps { display: inline-flex; color: var(--muted); }
+.location-gps { padding: 5px; color: var(--forest); }
+.location-indicator { width: 11px; height: 11px; flex: none; border-radius: 50%; }
+.indicator-green { border: 3px solid var(--forest); }
+.indicator-orange { background: var(--orange); }
+.builder-quick { margin-top: 19px; }
+.builder-quick > span, .payment-selector > span, .organization-groups > span { color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .8px; }
+.builder-quick > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.quick-chip { display: inline-flex; min-height: 29px; align-items: center; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #536058; font-size: 10px; }
+.quick-chip.quick-chip-active { border-color: #b9ccbc; background: var(--forest-soft); color: var(--forest); }
+.passenger-count { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; margin-top: 7px; border-bottom: 1px solid var(--line); }
+.passenger-count > div:first-child { display: inline-flex; align-items: center; gap: 8px; color: #536058; font-size: 11px; }
+.passenger-count > div:last-child { display: inline-flex; align-items: center; gap: 12px; }
+.passenger-count button { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 8px; background: white; font-size: 15px; }
+.passenger-count button:disabled { color: #c8cac5; }
+.passenger-count strong { font-size: 12px; }
+.payment-selector { margin-top: 15px; }
+.payment-selector > div { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 8px; }
+.payment-selector button { display: inline-flex; min-height: 37px; justify-content: center; align-items: center; gap: 6px; padding: 0 4px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #536058; font-size: 10px; }
+.payment-selector button.payment-selected { border-color: #a3b8a5; background: #f4f8f4; color: var(--forest); }
+.notes-input { width: 100%; padding: 10px; margin-top: 12px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; outline-color: #a3b8a5; font-size: 10px; line-height: 1.5; }
+.fare-estimate { display: flex; justify-content: space-between; align-items: end; padding: 12px 0 10px; }
+.fare-estimate > div { display: grid; gap: 4px; }
+.fare-estimate > div > span { color: var(--muted); font-size: 8px; font-weight: 760; letter-spacing: .6px; }
+.fare-estimate strong { font-size: 24px; letter-spacing: -.8px; }
+.fare-estimate > small { padding-bottom: 4px; color: var(--muted); font-size: 10px; }
+.request-button, .action-wide { width: 100%; padding: 0 13px; }
+.availability-note { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--forest); font-size: 10px; line-height: 1.4; }
+.availability-empty { color: var(--muted); }
+.availability-empty > span { flex: none; background: var(--orange); }
+.ride-live-panel h2, .driver-active-card h2 { margin: 19px 0 7px; font-size: 22px; letter-spacing: -.7px; }
+.live-subtitle { margin: 0 0 21px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.route-preview { display: flex; gap: 12px; padding: 15px 0; }
+.route-preview-track { display: flex; width: 14px; flex: none; flex-direction: column; align-items: center; padding-top: 7px; }
+.route-dot-start, .route-dot-end { width: 10px; height: 10px; flex: none; border-radius: 50%; }
+.route-dot-start { border: 3px solid var(--forest); }
+.route-dot-end { background: var(--orange); }
+.route-dash { width: 1px; height: 28px; margin: 4px 0; border-left: 1px dashed #b6bdb7; }
+.route-preview-labels { display: grid; min-width: 0; flex: 1; gap: 17px; }
+.route-preview-labels > div { display: grid; gap: 4px; }
+.route-preview-labels small { color: var(--muted); font-size: 8px; font-weight: 750; letter-spacing: .6px; }
+.route-preview-labels strong { overflow: hidden; font-size: 11px; font-weight: 630; text-overflow: ellipsis; white-space: nowrap; }
+.route-preview-small { padding: 11px 0; }
+.route-preview-small .route-preview-labels { gap: 12px; }
+.route-preview-small .route-dash { height: 21px; }
+.assigned-driver { display: flex; align-items: center; gap: 10px; padding: 13px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.assigned-driver > div { display: grid; gap: 3px; }
+.assigned-driver > div strong { font-size: 11px; }
+.assigned-driver > div span, .assigned-driver > div small { color: var(--muted); font-size: 10px; }
+.round-contact { display: grid; width: 34px; height: 34px; margin-left: auto; place-items: center; border-radius: 50%; background: var(--forest-soft); color: var(--forest); }
+.security-code-box { padding: 12px; margin-top: 13px; border: 1px solid #e6eadf; border-radius: 10px; background: #f8faf5; }
+.security-code-box > div { display: flex; justify-content: space-between; align-items: center; }
+.security-code-box > div > span { color: var(--forest); font-size: 8px; font-weight: 800; letter-spacing: .5px; }
+.security-code-box > div > strong { font-size: 23px; font-weight: 800; letter-spacing: 4px; }
+.security-code-box p { margin: 6px 0 0; color: var(--muted); font-size: 9px; }
+.fare-summary { display: flex; justify-content: space-between; align-items: center; padding: 17px 0 13px; }
+.fare-summary > span { color: var(--muted); font-size: 11px; }
+.fare-summary > strong { font-size: 21px; letter-spacing: -.7px; }
+.text-danger-button { display: block; width: 100%; min-height: 37px; margin-top: 6px; border: 0; background: transparent; color: #b65353; font-size: 11px; }
+.rating-card { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px; margin-top: 16px; border: 1px solid var(--line); border-radius: 13px; background: white; }
+.rating-card h3 { margin: 0; font-size: 13px; }
+.rating-card p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+.rating-stars { display: inline-flex; gap: 3px; }
+.rating-stars button { padding: 0 2px; border: 0; background: transparent; color: #ddd; font-size: 24px; }
+.rating-stars button.star-on { color: #d9a23a; }
+
+/* Cards and shared empty states */
+.rides-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 13px; }
+.ride-card { min-width: 0; padding: 15px; border: 1px solid #e9eae6; border-radius: 12px; background: white; }
+.ride-card-head { display: flex; justify-content: space-between; align-items: start; gap: 7px; }
+.ride-card-head > div { display: grid; gap: 4px; }
+.folio-label { font-size: 10px; font-weight: 750; }
+.ride-time { color: var(--muted); font-size: 9px; }
+.ride-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 999px; background: #f1f3ef; color: #58645b; font-size: 9px; font-weight: 680; white-space: nowrap; }
+.ride-status > span { width: 6px; height: 6px; border-radius: 50%; background: #7a847b; }
+.ride-status.status-requested { background: #fbf4e7; color: #916421; }
+.ride-status.status-requested > span { background: #d49a30; }
+.ride-status.status-accepted, .ride-status.status-arrived { background: #eaf1fa; color: #3c6697; }
+.ride-status.status-accepted > span, .ride-status.status-arrived > span { background: #5685be; }
+.ride-status.status-in_progress, .ride-status.status-completed { background: #ebf5ed; color: #367b48; }
+.ride-status.status-in_progress > span, .ride-status.status-completed > span { background: #56a46a; }
+.ride-status.status-cancelled { background: #f8eded; color: #a65b5b; }
+.ride-status.status-cancelled > span { background: #bd7171; }
+.ride-card-meta { display: flex; align-items: center; gap: 11px; padding-top: 10px; border-top: 1px solid #eff0ec; }
+.ride-card-meta > span { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 10px; }
+.ride-card-meta > strong { margin-left: auto; font-size: 16px; }
+.ride-person { display: flex; align-items: center; gap: 8px; padding-top: 11px; margin-top: 10px; border-top: 1px solid #eff0ec; font-size: 10px; }
+.ride-person > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ride-call { margin-left: auto; color: var(--forest); }
+.ride-card-actions { margin-top: 12px; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+.filter-row .quick-chip { min-height: 34px; padding: 0 11px; }
+.empty-state { display: grid; justify-items: center; padding: 54px 17px; border: 1px dashed #dddeda; border-radius: 13px; text-align: center; }
+.empty-icon { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 13px; background: var(--forest-soft); color: var(--forest); }
+.empty-state h3 { margin: 14px 0 6px; font-size: 14px; }
+.empty-state > p { max-width: 390px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+.empty-action { justify-content: center; gap: 8px; min-height: 43px; padding: 0 13px; margin-top: 17px; font-size: 11px; }
+.activity-card .empty-state { padding: 44px 10px; border: 0; }
+
+/* Driver operation */
+.availability-switch { display: inline-flex; min-height: 39px; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid #e5e7e1; border-radius: 999px; background: white; color: var(--muted); font-size: 11px; font-weight: 670; }
+.availability-switch > span { width: 8px; height: 8px; border-radius: 50%; background: #a2a6a0; }
+.availability-switch.switch-available { border-color: #b8d8c0; background: #eff7f0; color: #337346; }
+.availability-switch.switch-available > span { background: #4daf71; }
+.availability-switch.switch-busy { border-color: #e5d9b7; color: #917331; }
+.availability-switch.switch-busy > span { background: #d0a346; }
+.driver-preview-picker { display: flex; align-items: center; gap: 8px; padding: 11px 12px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--forest); }
+.driver-preview-picker select { min-width: 220px; border: 0; outline: none; background: transparent; color: var(--ink); font-size: 11px; }
+.driver-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 15px; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.driver-summary > div { display: flex; align-items: center; gap: 8px; }
+.driver-summary > div > svg { flex: none; color: var(--forest); }
+.driver-summary > div > span { display: grid; min-width: 0; gap: 4px; overflow: hidden; font-size: 11px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+.driver-summary > div > span > small { color: var(--muted); font-size: 9px; font-weight: 400; }
+.count-badge { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; background: var(--forest); color: white; font-size: 11px; }
+.driver-active-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.driver-active-layout .taxi-map { height: 420px; }
+.driver-active-card h2 { font-size: 19px; }
+.driver-active-card .form-field { margin-top: 14px; }
+.security-code-input { text-align: center; font-size: 23px !important; letter-spacing: 9px; }
+.recent-driver-trips { margin-top: 29px; }
+
+/* Syndicates, groups and drivers */
+.organization-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px; margin-bottom: 18px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.organization-metrics > div { display: grid; gap: 5px; padding-left: 8px; }
+.organization-metrics > div + div { border-left: 1px solid var(--line); }
+.organization-metrics strong { font-size: 23px; }
+.organization-metrics span { color: var(--muted); font-size: 10px; }
+.organizations-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 13px; }
+.organization-card { min-height: 190px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.organization-card.organization-inactive { opacity: .65; }
+.organization-head { display: flex; align-items: center; gap: 10px; }
+.organization-mark { display: grid; width: 41px; height: 41px; flex: none; place-items: center; border-radius: 11px; color: white; }
+.organization-head > div { min-width: 0; flex: 1; }
+.organization-head h3 { margin: 0 0 4px; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.organization-head p { margin: 0; color: var(--muted); font-size: 9px; }
+.state-toggle { position: relative; width: 39px; height: 23px; flex: none; padding: 0; border: 0; border-radius: 999px; background: #d5d8d3; }
+.state-toggle > span { position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; border-radius: 50%; background: white; transition: transform .15s ease; }
+.state-toggle.state-on { background: var(--forest); }
+.state-toggle.state-on > span { transform: translateX(16px); }
+.organization-contact { display: flex; align-items: center; gap: 6px; margin-top: 14px; color: #56615a; font-size: 10px; }
+.organization-contact > svg { color: var(--muted); }
+.organization-groups { padding-top: 13px; margin-top: 13px; border-top: 1px solid var(--line); }
+.organization-groups > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.organization-groups > p { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
+.group-label { display: inline-flex; min-height: 27px; align-items: center; gap: 6px; padding: 0 7px; border: 1px solid var(--line); border-radius: 7px; font-size: 9px; }
+.group-label > span { width: 7px; height: 7px; border-radius: 50%; }
+.group-label > button { padding: 0; border: 0; background: transparent; color: var(--forest); }
+.group-label.group-inactive { opacity: .55; }
+.driver-filters { display: grid; grid-template-columns: 1fr 220px; gap: 10px; margin-bottom: 17px; }
+.search-box { display: flex; min-height: 43px; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--muted); }
+.search-box input, .driver-filters > select { min-width: 0; flex: 1; border: 0; outline: none; background: transparent; font-size: 11px; }
+.driver-filters > select { padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+.drivers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(325px, 1fr)); gap: 12px; }
+.driver-card { padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.driver-card.driver-suspended { opacity: .75; }
+.driver-card-top { display: flex; align-items: center; gap: 9px; }
+.driver-card-top > div { min-width: 0; flex: 1; }
+.driver-card-top h3 { overflow: hidden; margin: 0 0 4px; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.driver-card-top > div > span { display: block; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.driver-state { padding: 5px 7px; border-radius: 7px; background: #f0f1ed; color: #737a73; font-size: 8px; white-space: nowrap; }
+.driver-state.state-available { background: #edf6ef; color: #387a47; }
+.driver-state.state-busy { background: #faf3e6; color: #92713a; }
+.driver-state.state-suspended { background: #f8eaea; color: #a75353; }
+.driver-unit-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 12px 0; margin-top: 13px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.driver-unit-strip > div { display: grid; gap: 5px; }
+.driver-unit-strip > div > span { color: var(--muted); font-size: 8px; }
+.driver-unit-strip > div > strong { font-size: 11px; }
+.driver-details { display: grid; gap: 8px; padding: 12px 0; }
+.driver-details > span { display: inline-flex; align-items: center; gap: 7px; color: #535d56; font-size: 10px; }
+.driver-details > span > svg { color: var(--muted); }
+.driver-card-actions { display: flex; justify-content: space-between; align-items: center; padding-top: 11px; border-top: 1px solid var(--line); }
+.verified-mark { display: inline-flex; align-items: center; gap: 5px; color: var(--forest); font-size: 9px; }
+.suspend-button, .reactivate-button { border: 0; background: transparent; color: #a65555; font-size: 10px; font-weight: 620; }
+.reactivate-button { color: var(--forest); }
+.manual-assignment { display: grid; gap: 8px; }
+.manual-assignment > select { width: 100%; min-height: 38px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: white; font-size: 10px; }
+.manual-assignment > p { color: var(--muted); font-size: 10px; }
+.manual-assignment .primary-button { min-height: 42px; }
+.cancel-small { min-height: 29px; font-size: 10px; }
+
+/* Modal dialogs, forms, settings and profile */
+.modal-backdrop { position: fixed; z-index: 30; inset: 0; display: grid; padding: 20px; place-items: center; overflow-y: auto; background: rgb(21 29 25 / 46%); backdrop-filter: blur(2px); }
+.modal-card { width: min(480px, 100%); max-height: min(87dvh, 820px); overflow-y: auto; padding: 20px; border-radius: 15px; background: white; box-shadow: 0 24px 80px rgb(0 0 0 / 17%); }
+.modal-card.modal-wide { width: min(660px, 100%); }
+.modal-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.modal-top h2 { margin: 0; font-size: 18px; letter-spacing: -.4px; }
+.modal-top p { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.icon-button { display: grid; width: 31px; height: 31px; flex: none; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--muted); }
+.modal-form { display: grid; gap: 14px; margin-top: 19px; }
+.kind-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.kind-switch button { display: flex; min-height: 40px; justify-content: center; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 8px; background: white; color: #5a645d; font-size: 11px; }
+.kind-switch button.kind-active { border-color: #a2b6a4; background: var(--forest-soft); color: var(--forest); }
+.kind-switch button:disabled { opacity: .45; }
+.form-field { display: grid; min-width: 0; gap: 6px; }
+.form-field > span { color: #46514a; font-size: 10px; font-weight: 650; }
+.form-field > input, .form-field > select, .form-field > textarea { min-width: 0; min-height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; outline-color: #9fb6a3; background: white; font-size: 11px; }
+.form-field > input:disabled { background: #f3f4f0; color: var(--muted); }
+.form-field > small { color: var(--muted); font-size: 9px; line-height: 1.4; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-group-title { display: flex; align-items: center; gap: 7px; padding-top: 3px; color: var(--forest); font-size: 9px; font-weight: 780; letter-spacing: .6px; }
+.form-group-title ~ .form-group-title { padding-top: 11px; border-top: 1px solid var(--line); }
+.form-group-title svg { width: 16px; height: 16px; }
+.color-options { display: flex; gap: 9px; }
+.color-options button { width: 25px; height: 25px; border: 2px solid transparent; border-radius: 50%; }
+.color-options button.color-active { outline: 2px solid var(--forest); outline-offset: 3px; }
+.settings-form { display: grid; max-width: 760px; gap: 13px; }
+.settings-block { padding: 19px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.settings-block-title { display: flex; align-items: center; gap: 10px; margin-bottom: 17px; }
+.settings-block-title > svg { color: var(--forest); }
+.settings-block-title h2 { margin: 0; font-size: 13px; }
+.settings-block-title p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+.settings-grid { grid-template-columns: repeat(3, 1fr); }
+.currency-input { display: flex; min-height: 40px; align-items: center; gap: 6px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; }
+.currency-input > span { color: var(--muted); font-size: 12px; }
+.currency-input input { width: 100%; border: 0; outline: none; font-size: 11px; }
+.estimate-explanation { margin: 13px 0 0; color: var(--muted); font-size: 10px; }
+.estimate-explanation strong { color: var(--forest); }
+.service-toggle-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.service-toggle-card strong { font-size: 12px; }
+.service-toggle-card p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+.settings-save { justify-content: center; gap: 8px; width: fit-content; min-height: 44px; padding: 0 15px; }
+.profile-form { display: grid; max-width: 520px; gap: 15px; padding: 19px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+.profile-header { display: flex; align-items: center; gap: 10px; padding-bottom: 15px; border-bottom: 1px solid var(--line); }
+.profile-header h2 { margin: 0 0 4px; font-size: 14px; }
+.profile-header > div > span { color: var(--forest); font-size: 10px; }
+.privacy-card { display: flex; max-width: 520px; align-items: start; gap: 10px; padding: 15px; margin-top: 13px; border: 1px solid #e2e9e0; border-radius: 11px; background: #f1f6ef; }
+.privacy-card > svg { flex: none; color: var(--forest); }
+.privacy-card strong { font-size: 11px; }
+.privacy-card p { margin: 5px 0 0; color: #647166; font-size: 10px; line-height: 1.6; }
+
+/* Login loading and notifications */
+.loading-shell { display: grid; min-height: 100dvh; align-content: center; justify-items: center; gap: 26px; padding: 22px; }
+.loading-card { display: grid; width: min(390px, 100%); justify-items: center; padding: 32px 25px; border: 1px solid var(--line); border-radius: 15px; background: white; text-align: center; }
+.loading-card h1 { margin: 17px 0 6px; font-size: 19px; letter-spacing: -.4px; }
+.loading-card p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.loading-spinner { width: 29px; height: 29px; border: 3px solid #dfe9df; border-top-color: var(--forest); border-radius: 50%; animation: rotating .8s linear infinite; }
+@keyframes rotating { to { transform: rotate(360deg); } }
+.loading-error { display: grid; width: 45px; height: 45px; place-items: center; border-radius: 12px; background: #fbefed; color: #aa5555; }
+.retry-button { width: 100%; padding: 0 12px; margin-top: 19px; }
+.signin-another { margin-top: 13px; color: var(--muted); font-size: 10px; }
+.toast-message { position: fixed; z-index: 40; right: 21px; bottom: 20px; display: flex; max-width: min(410px, calc(100% - 30px)); align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid #dfe8df; border-radius: 11px; background: white; box-shadow: 0 11px 35px rgb(0 0 0 / 12%); color: var(--forest); }
+.toast-message.toast-danger { border-color: #ecdcdc; color: #a45656; }
+.toast-message > span { color: var(--ink); font-size: 11px; line-height: 1.4; }
+.toast-message > button { padding: 3px; border: 0; background: transparent; color: var(--muted); }
+.submitting-line { position: fixed; z-index: 50; top: 0; right: 0; left: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--forest), var(--lime), transparent); animation: submitting 1.1s linear infinite; }
+@keyframes submitting { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+@media (max-width: 1100px) {
+  .app-sidebar { width: 224px; }
+  .app-main { margin-left: 224px; }
+  .app-header { padding: 0 25px; }
+  .app-content { padding-right: 25px; padding-left: 25px; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .overview-lower { grid-template-columns: 1fr; }
+  .activity-card { min-height: auto; }
+  .passenger-layout { grid-template-columns: minmax(280px, .9fr) minmax(290px, 1.1fr); gap: 11px; }
+  .taxi-map { height: 620px; }
+  .taxi-map-compact { height: 308px; }
+  .organization-metrics { gap: 7px; }
+}
+
+@media (max-width: 720px) {
+  .welcome-shell { padding: 21px 21px 18px; }
+  .verified-pill { padding: 8px 10px; font-size: 10px; }
+  .welcome-grid { grid-template-columns: 1fr; align-content: center; gap: 30px; padding: 42px 0 22px; }
+  .welcome-copy h1 { margin-top: 15px; font-size: 52px; letter-spacing: -3px; }
+  .welcome-copy > p { font-size: 14px; }
+  .feature-row { gap: 9px 13px; margin-top: 20px; font-size: 10px; }
+  .access-card { padding: 24px; }
+  .access-heading h2 { margin-bottom: 19px; font-size: 22px; }
+  .welcome-footer { gap: 10px; font-size: 9px; }
+  .app-sidebar { z-index: 24; width: min(284px, 88vw); transform: translateX(-104%); transition: transform .18s ease-out; }
+  .app-sidebar.sidebar-open { transform: translateX(0); }
+  .sidebar-close { display: grid; width: 31px; height: 31px; place-items: center; border: 0; border-radius: 8px; background: #f3f5f1; color: var(--muted); }
+  .sidebar-overlay { position: fixed; z-index: 23; inset: 0; display: block; border: 0; background: rgb(21 29 25 / 43%); }
+  .app-main { min-height: 100dvh; margin-left: 0; }
+  .app-header { height: 62px; gap: 9px; padding: 0 13px; }
+  .mobile-menu-button { display: grid; width: 32px; height: 32px; flex: none; place-items: center; border: 0; border-radius: 8px; background: white; color: var(--forest); }
+  .header-location { min-width: 0; flex: 1; overflow: hidden; gap: 5px; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  .header-actions { gap: 9px; }
+  .service-badge { font-size: 0; }
+  .header-user { gap: 0; }
+  .header-user > span:last-child { display: none; }
+  .app-content { padding: 27px 15px 99px; }
+  .section-title { align-items: start; gap: 10px; margin-bottom: 19px; }
+  .section-title h1 { font-size: 27px; }
+  .section-title p { font-size: 11px; }
+  .section-eyebrow { font-size: 8px; }
+  .top-action { min-height: 37px; gap: 5px; padding: 0 9px; font-size: 10px; }
+  .section-actions .top-action > svg, .section-actions .secondary-button > svg { width: 16px; height: 16px; }
+  .metric-grid { gap: 9px; }
+  .metric-card { min-height: 119px; padding: 12px; }
+  .metric-card > span { font-size: 7px; }
+  .metric-card > strong { margin-top: 14px; font-size: 24px; }
+  .metric-card > p { font-size: 9px; }
+  .setup-guide { display: grid; gap: 12px; padding: 15px; }
+  .setup-guide > div:last-child { min-width: 0; }
+  .overview-lower { gap: 12px; margin-top: 13px; }
+  .overview-map-card, .activity-card { min-height: 0; padding: 13px; }
+  .passenger-layout { display: flex; flex-direction: column-reverse; gap: 12px; }
+  .passenger-live .passenger-layout { flex-direction: column; }
+  .passenger-layout > * { width: 100%; }
+  .passenger-layout .taxi-map { height: 290px; }
+  .passenger-live .taxi-map { height: 300px; }
+  .ride-builder, .ride-live-panel, .driver-active-card { padding: 14px; }
+  .rating-card { flex-wrap: wrap; padding: 14px; }
+  .rating-card .secondary-button { width: 100%; }
+  .driver-summary { grid-template-columns: 1fr; gap: 10px; }
+  .driver-active-layout { grid-template-columns: 1fr; }
+  .driver-active-layout .taxi-map { height: 280px; }
+  .organization-metrics { padding: 11px 8px; }
+  .organization-metrics > div { padding-left: 5px; }
+  .organization-metrics strong { font-size: 19px; }
+  .organization-metrics span { font-size: 8px; }
+  .organizations-grid, .drivers-grid { grid-template-columns: 1fr; }
+  .button-pair { gap: 5px; }
+  .button-pair .secondary-button { min-height: 37px; padding: 0 8px; font-size: 9px; }
+  .driver-filters { grid-template-columns: 1fr; }
+  .driver-filters > select { min-height: 42px; }
+  .form-grid, .settings-grid { grid-template-columns: 1fr; }
+  .modal-backdrop { align-items: end; padding: 0; }
+  .modal-card, .modal-card.modal-wide { width: 100%; max-height: 90dvh; padding: 19px 17px max(21px, env(safe-area-inset-bottom)); border-radius: 17px 17px 0 0; }
+  .mobile-bottom-nav { position: fixed; z-index: 19; right: 0; bottom: 0; left: 0; display: flex; justify-content: space-around; align-items: center; padding: 8px 3px max(9px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgb(255 255 255 / 97%); backdrop-filter: blur(12px); }
+  .mobile-bottom-nav > button { display: grid; min-width: 54px; justify-items: center; gap: 4px; padding: 1px 4px; border: 0; background: transparent; color: #848b84; }
+  .mobile-bottom-nav > button > span { position: relative; display: inline-flex; }
+  .mobile-bottom-nav > button small { font-size: 9px; font-weight: 540; }
+  .mobile-bottom-nav > button.bottom-active { color: var(--forest); }
+  .mobile-bottom-nav > button.bottom-active small { font-weight: 760; }
+  .mobile-bottom-nav > button > span > i { position: absolute; top: -3px; right: -5px; width: 8px; height: 8px; border: 2px solid white; border-radius: 50%; background: var(--orange); }
+  .toast-message { right: 10px; bottom: 76px; left: 10px; max-width: none; }
+}
+
+@media (max-width: 390px) {
+  .welcome-shell { padding-right: 15px; padding-left: 15px; }
+  .verified-pill { padding: 7px; font-size: 9px; }
+  .welcome-copy h1 { font-size: 45px; }
+  .access-card { padding: 19px; }
+  .app-content { padding-right: 11px; padding-left: 11px; }
+  .section-title h1 { font-size: 24px; }
+  .metric-card { padding: 10px; }
+  .metric-card > span { letter-spacing: 0; }
+  .mobile-bottom-nav > button { min-width: 46px; padding-right: 2px; padding-left: 2px; }
+  .mobile-bottom-nav > button small { font-size: 8px; }
+}
+
+/* Ajustes específicos para la aplicación HTML independiente */
+.access-card-netlify { padding: 27px 28px 23px; }
+.access-card-netlify .access-heading h2 { margin-bottom: 17px; }
+.gate-list-compact { gap: 7px; }
+.gate-list-compact .gate-choice { min-height: 50px; padding: 0 11px; }
+.gate-list-compact .gate-icon { width: 29px; height: 29px; }
+.gate-list-compact .gate-label strong { font-size: 11px; }
+.gate-list-compact .gate-label small { font-size: 9px; }
+.access-form { display: grid; gap: 10px; margin-top: 15px; }
+.access-form .access-button { min-height: 47px; margin-top: 4px; }
+.access-form .form-field > input { min-height: 39px; }
+.inline-link { padding: 0; border: 0; background: transparent; color: var(--forest); font-size: inherit; font-weight: 750; text-decoration: underline; }
+.setup-alert { display: flex; align-items: flex-start; gap: 10px; padding: 11px; margin-bottom: 13px; border: 1px solid #ecdac7; border-radius: 10px; background: #fff8ef; color: #965b2d; }
+.setup-alert > svg { flex: none; margin-top: 1px; }
+.setup-alert strong { font-size: 10px; }
+.setup-alert p { margin: 5px 0; font-size: 9px; line-height: 1.5; }
+.setup-alert small { font-size: 8px; line-height: 1.5; }
+.logout-button { width: 100%; border: 0; background: transparent; text-align: left; }
+.gps-button { border: 0; background: transparent; }
+.driver-admin-actions { display: inline-flex; align-items: center; gap: 9px; }
+.reset-password-button { display: grid; width: 25px; height: 25px; place-items: center; border: 0; border-radius: 7px; background: #f0f4ef; color: var(--forest); }
+.driver-ride-wrapper { position: relative; }
+.accept-ride-button { margin-top: 8px; }
+.emergency-link { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 11px 0 0; color: #a25656; font-size: 10px; }
+.switch-checkbox { position: relative; display: inline-flex; flex: none; cursor: pointer; }
+.switch-checkbox input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.switch-checkbox > span { position: relative; width: 42px; height: 24px; border-radius: 999px; background: #d4d9d2; transition: background .15s ease; }
+.switch-checkbox > span::after { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgb(0 0 0 / 16%); content: ''; transition: transform .15s ease; }
+.switch-checkbox input:checked + span { background: var(--forest); }
+.switch-checkbox input:checked + span::after { transform: translateX(18px); }
+.switch-checkbox input:focus-visible + span { outline: 2px solid var(--forest); outline-offset: 3px; }
+.map-tile { background-size: 256px 256px; background-repeat: no-repeat; }
+@media (max-width: 720px) {
+  .access-card-netlify { padding: 21px; }
+  .gate-list-compact .gate-choice { min-height: 48px; }
+  .driver-admin-actions { gap: 6px; }
+}
+@media (max-width: 390px) {
+  .access-card-netlify { padding: 17px; }
+}
+    </style>
+  </head>
+  <body>
+    <div id="taxi-app" aria-live="polite">
+      <main class="loading-shell">
+        <div class="brand"><span class="brand-symbol">T</span><span class="brand-copy"><strong>Taxi Turicato</strong><small>MICHOACÁN</small></span></div>
+        <div class="loading-card"><span class="loading-spinner"></span><h1>Conectando con Taxi Turicato</h1><p>Estamos preparando el servicio.</p></div>
+      </main>
+    </div>
+    <div id="taxi-dialog"></div>
+    <div id="taxi-notification"></div>
+    <noscript>Taxi Turicato necesita JavaScript activado para funcionar.</noscript>
+    <script>
+(() => {
+  "use strict";
+
+  const API = "/api/taxi";
+  const CENTER = { lat: 19.05299, lng: -101.41863 };
+  const PLACES = [
+    { label: "Centro de Turicato", lat: 19.05299, lng: -101.41863 },
+    { label: "Presidencia municipal", lat: 19.05342, lng: -101.41811 },
+    { label: "Plaza principal", lat: 19.05267, lng: -101.41912 },
+    { label: "Entrada a Turicato", lat: 19.05025, lng: -101.42312 },
+    { label: "Puruarán, centro", lat: 19.0975, lng: -101.522 },
+  ];
+  const COLORS = ["#134738", "#537dd5", "#d58237", "#9556a1", "#bd4f5a", "#438e80"];
+  const ACTIVE = ["requested", "accepted", "arrived", "in_progress"];
+  const STATUSES = {
+    requested: "Buscando taxista", accepted: "Taxista en camino", arrived: "La unidad llegó",
+    in_progress: "Viaje en curso", completed: "Completado", cancelled: "Cancelado",
+  };
+
+  const iconPaths = {
+    home: '<path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21v-7h6v7"/>',
+    car: '<path d="m5 17-1.4 1.4A1 1 0 0 1 2 17.7v-4.2a2 2 0 0 1 .4-1.2L5 9l1.4-3.5A2 2 0 0 1 8.3 4h7.4a2 2 0 0 1 1.9 1.5L19 9l2.6 3.3a2 2 0 0 1 .4 1.2v4.2a1 1 0 0 1-1.6.7L19 17"/><path d="M5 17h14M5 9h14"/><circle cx="7" cy="13" r="1"/><circle cx="17" cy="13" r="1"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87"/>',
+    building: '<rect x="3" y="5" width="18" height="16" rx="1"/><path d="M7 9h1m4 0h1m4 0h1M7 13h1m4 0h1m4 0h1m-7 8v-4h4v4"/>',
+    shield: '<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m9 12 2 2 4-4"/>',
+    pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+    location: '<circle cx="12" cy="12" r="8"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/><circle cx="12" cy="12" r="2"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1-.2a8 8 0 0 0 0-5.6l-.1-.2 1.2-1.8-2-2-1.8 1.2-.2-.1a8 8 0 0 0-5.6 0l-.2.1L9 5.2l-2 2 1.2 1.8-.1.2a8 8 0 0 0 0 5.6l.1.2L7 16.8l2 2 1.8-1.2.2.1a8 8 0 0 0 5.6 0l.2-.1 1.8 1.2 2-2z"/>',
+    route: '<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>',
+    chart: '<path d="M3 3v18h18"/><path d="m8 15 4-4 3 3 5-6"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/>',
+    arrow: '<path d="M5 12h14m-7-7 7 7-7 7"/>',
+    chevron: '<path d="m9 18 6-6-6-6"/>',
+    check: '<path d="m5 12 4 4L19 6"/>',
+    x: '<path d="m18 6-12 12M6 6l12 12"/>',
+    phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.1 5.18 2 2 0 0 1 5.08 3h3a2 2 0 0 1 2 1.72l.35 2.4a2 2 0 0 1-.57 1.72L8 10.7a16 16 0 0 0 5.3 5.3l1.86-1.86a2 2 0 0 1 1.72-.57l2.4.35A2 2 0 0 1 22 16.92Z"/>',
+    banknote: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+    transfer: '<path d="m17 3 4 4-4 4"/><path d="M21 7H9a4 4 0 0 0-4 4v1"/><path d="m7 21-4-4 4-4"/><path d="M3 17h12a4 4 0 0 0 4-4v-1"/>',
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    star: '<path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+    logout: '<path d="M10 17 15 12 10 7"/><path d="M15 12H3"/><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>',
+    menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+    key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L21 8"/>',
+    refresh: '<path d="M20 11a8 8 0 0 0-15.5-2M4 4v5h5M4 13a8 8 0 0 0 15.5 2M20 20v-5h-5"/>',
+  };
+
+  const state = {
+    data: null,
+    page: "",
+    gate: "passenger",
+    authMode: "login",
+    sidebar: false,
+    modal: null,
+    selectedDriver: "",
+    rideFilter: "all",
+    driverSearch: "",
+    unionFilter: "all",
+    pending: false,
+    setupError: "",
+    map: null,
+    toastTimer: 0,
+    draft: { pickup: { ...PLACES[0] }, destination: null, selecting: "destination", passengers: 1, payment: "cash", notes: "" },
+  };
+
+  const app = document.getElementById("taxi-app");
+  const dialogs = document.getElementById("taxi-dialog");
+  const notifications = document.getElementById("taxi-notification");
+
+  function esc(input) {
+    return String(input ?? "").replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
+  }
+
+  function icon(name, size = 19) {
+    return `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${iconPaths[name] || iconPaths.pin}</svg>`;
+  }
+
+  function brand() {
+    return '<a class="brand" href="/"><span class="brand-symbol">T</span><span class="brand-copy"><strong>Taxi Turicato</strong><small>MICHOACÁN</small></span></a>';
+  }
+
+  function avatar(name, small = false) {
+    const initials = String(name || "T").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+    return `<span class="avatar ${small ? "avatar-small" : ""}" aria-hidden="true">${esc(initials)}</span>`;
+  }
+
+  function money(amount) {
+    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(Number(amount) || 0);
+  }
+
+  function when(stamp) {
+    if (!stamp) return "—";
+    const elapsed = Math.round((Date.now() - Date.parse(stamp)) / 60000);
+    if (elapsed < 1) return "Hace un momento";
+    if (elapsed < 60) return `Hace ${elapsed} min`;
+    if (elapsed < 1440) return `Hace ${Math.round(elapsed / 60)} h`;
+    return new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(stamp));
+  }
+
+  function rideStatus(status) {
+    return `<span class="ride-status status-${esc(status)}"><span></span>${esc(STATUSES[status] || status)}</span>`;
+  }
+
+  function section(eyebrow, title, detail = "", action = "") {
+    return `<div class="section-title"><div><span class="section-eyebrow">${esc(eyebrow)}</span><h1>${esc(title)}</h1>${detail ? `<p>${esc(detail)}</p>` : ""}</div>${action ? `<div class="section-actions">${action}</div>` : ""}</div>`;
+  }
+
+  function empty(kind, title, detail, action = "") {
+    return `<div class="empty-state"><span class="empty-icon">${icon(kind)}</span><h3>${esc(title)}</h3><p>${esc(detail)}</p>${action}</div>`;
+  }
+
+  function routePreview(pickup, destination, small = false) {
+    return `<div class="route-preview ${small ? "route-preview-small" : ""}"><div class="route-preview-track"><span class="route-dot-start"></span><span class="route-dash"></span><span class="route-dot-end"></span></div><div class="route-preview-labels"><div><small>PARTIDA</small><strong>${esc(pickup)}</strong></div><div><small>DESTINO</small><strong>${esc(destination)}</strong></div></div></div>`;
+  }
+
+  function toast(message, danger = false) {
+    clearTimeout(state.toastTimer);
+    notifications.innerHTML = `<div class="toast-message ${danger ? "toast-danger" : ""}" role="status">${icon(danger ? "x" : "check")}<span>${esc(message)}</span><button data-action="close-toast" aria-label="Cerrar aviso">${icon("x", 16)}</button></div>`;
+    state.toastTimer = setTimeout(() => { notifications.innerHTML = ""; }, 4400);
+  }
+
+  async function request(action, values = {}, options = {}) {
+    if (state.pending) return false;
+    state.pending = true;
+    try {
+      const response = await fetch(API, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ action, ...values }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "No fue posible completar la operación.");
+      if (options.closeModal) closeModal();
+      if (action === "logout") {
+        state.data = null;
+        state.page = "";
+        state.authMode = "login";
+        render();
+      } else {
+        await refresh(false);
+      }
+      if (options.message) toast(options.message);
+      return payload;
+    } catch (error) {
+      toast(error.message || "No fue posible completar la operación.", true);
+      return false;
+    } finally {
+      state.pending = false;
+    }
+  }
+
+  async function refresh(quiet = false) {
+    try {
+      const response = await fetch(API, { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "No fue posible conectarse.");
+      state.setupError = "";
+      state.data = data.authenticated ? data : null;
+      if (state.data && !state.page) state.page = state.data.account.role === "admin" ? "overview" : state.data.account.role === "driver" ? "driver-dashboard" : "request";
+      render();
+    } catch (error) {
+      state.setupError = error.message || "No se pudo conectar con las funciones de Netlify.";
+      if (!quiet || !state.data) render();
+    }
+  }
+
+  function calculateQuote() {
+    const from = state.draft.pickup;
+    const to = state.draft.destination;
+    if (!from || !to || !state.data) return null;
+    const rad = (degrees) => degrees * Math.PI / 180;
+    const deltaLat = rad(to.lat - from.lat);
+    const deltaLng = rad(to.lng - from.lng);
+    const value = Math.sin(deltaLat / 2) ** 2 + Math.cos(rad(from.lat)) * Math.cos(rad(to.lat)) * Math.sin(deltaLng / 2) ** 2;
+    const km = Math.max(.3, Math.round(6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value)) * 1.32 * 10) / 10);
+    const config = state.data.settings;
+    return { km, fare: Math.max(Number(config.minimum_fare) || 45, Math.round((Number(config.base_fare) || 35) + km * (Number(config.fare_per_km) || 11))) };
+  }
+
+  function navItems() {
+    const data = state.data;
+    if (data.account.role === "admin") return [
+      { id: "overview", label: "Central", icon: "home" },
+      { id: "organizations", label: "Sindicatos y grupos", icon: "building" },
+      { id: "drivers", label: "Taxistas", icon: "car" },
+      { id: "rides", label: "Servicios", icon: "route", badge: data.rides.filter((ride) => ride.status === "requested").length },
+      { id: "settings", label: "Configuración", icon: "settings" },
+      { id: "passenger-preview", label: "Solicitar un taxi", icon: "pin" },
+      { id: "driver-preview", label: "Vista del taxista", icon: "users" },
+      { id: "profile", label: "Mi perfil", icon: "shield" },
+    ];
+    if (data.account.role === "driver") return [
+      { id: "driver-dashboard", label: "Mi unidad", icon: "car", badge: data.rides.filter((ride) => ride.status === "requested").length },
+      { id: "history", label: "Mis servicios", icon: "route" },
+      { id: "profile", label: "Mi perfil", icon: "users" },
+    ];
+    return [
+      { id: "request", label: "Pedir taxi", icon: "pin" },
+      { id: "history", label: "Mis viajes", icon: "route" },
+      { id: "profile", label: "Mi perfil", icon: "users" },
+    ];
+  }
+
+  function renderAuth() {
+    const register = state.authMode === "register";
+    const selected = state.gate;
+    const roles = [
+      { id: "passenger", label: "Necesito un taxi", description: "Solicita una unidad verificada", icon: "pin" },
+      { id: "driver", label: "Soy taxista", description: "Acceso para conductores autorizados", icon: "car" },
+      { id: "admin", label: "Administración", description: "Gestiona sindicatos, grupos y unidades", icon: "shield" },
+    ];
+
+    app.innerHTML = `<main class="welcome-shell"><header class="welcome-topbar">${brand()}<span class="verified-pill"><span></span> Operación verificada</span></header><section class="welcome-grid"><div class="welcome-copy"><span class="eyebrow">MOVILIDAD LOCAL · TURICATO</span><h1>Tu taxi de confianza, <em>sin vueltas.</em></h1><p>Conductores registrados por su sindicato, viajes claros y la tranquilidad de saber quién viene por ti.</p><div class="feature-row"><span>✓ Unidades verificadas</span><span>✓ Precio estimado</span><span>✓ Atención local</span></div></div><div class="access-card access-card-netlify"><div class="access-heading"><span>${register ? "NUEVA CUENTA" : "BIENVENIDO"}</span><h2>${register ? "Regístrate como pasajero" : "Ingresa a Taxi Turicato"}</h2></div>${state.setupError ? `<div class="setup-alert">${icon("settings", 17)}<div><strong>Falta completar la configuración</strong><p>${esc(state.setupError)}</p><small>Consulta el archivo INSTRUCCIONES_NETLIFY.md incluido en el paquete.</small></div></div>` : ""}${register ? "" : `<div class="gate-list gate-list-compact">${roles.map((role) => `<button class="gate-choice ${selected === role.id ? "is-selected" : ""}" data-action="choose-gate" data-value="${role.id}"><span class="gate-icon">${icon(role.icon, 18)}</span><span class="gate-label"><strong>${esc(role.label)}</strong><small>${esc(role.description)}</small></span><span class="gate-arrow">${icon("chevron", 16)}</span></button>`).join("")}</div>`}<form class="access-form" data-form="${register ? "register" : "login"}">${register ? `<label class="form-field"><span>Nombre completo</span><input name="name" required placeholder="Nombre y apellidos" autocomplete="name"></label><label class="form-field"><span>Número de teléfono</span><input name="phone" required placeholder="10 dígitos" inputmode="tel" autocomplete="tel"></label>` : ""}<label class="form-field"><span>Correo electrónico</span><input name="email" required type="email" placeholder="tu@correo.com" autocomplete="${register ? "email" : "username"}"></label><label class="form-field"><span>Contraseña</span><input name="password" required type="password" minlength="8" placeholder="Mínimo 8 caracteres" autocomplete="${register ? "new-password" : "current-password"}"></label><button class="primary-button access-button" type="submit"><span>${register ? "Crear mi cuenta" : "Iniciar sesión"}</span>${icon("arrow")}</button></form><p class="access-note">${register ? '¿Ya tienes cuenta? <button class="inline-link" data-action="auth-login">Inicia sesión</button>' : selected === "passenger" ? '¿Primera vez? <button class="inline-link" data-action="auth-register">Crea tu cuenta de pasajero</button>' : selected === "driver" ? "Tu cuenta y contraseña deben ser creadas por el administrador." : "Acceso exclusivo para la administración autorizada."}</p></div></section><footer class="welcome-footer"><span>Hecho para Turicato, Michoacán.</span><span>Viaja tranquilo. Llega seguro.</span></footer></main>`;
+  }
+
+  function renderShell() {
+    const data = state.data;
+    const links = navItems();
+    const role = data.account.role === "admin" ? "Administración" : data.account.role === "driver" ? "Taxista autorizado" : "Pasajero";
+    const mobileLinks = data.account.role === "admin" ? links.filter((link) => ["overview", "organizations", "drivers", "rides", "passenger-preview"].includes(link.id)) : links;
+    const sidebar = `<aside class="app-sidebar ${state.sidebar ? "sidebar-open" : ""}"><div class="sidebar-top">${brand()}<button class="sidebar-close" data-action="close-sidebar" aria-label="Cerrar menú">${icon("x")}</button></div><div class="sidebar-role"><span>${esc(role.toUpperCase())}</span>${data.account.role === "admin" ? "<small>ACCESO TOTAL</small>" : ""}</div><nav class="sidebar-nav">${links.map((link, index) => `${data.account.role === "admin" && index === 5 ? '<span class="sidebar-separator">VISTAS OPERATIVAS</span>' : ""}<button class="nav-link ${state.page === link.id ? "nav-active" : ""}" data-action="navigate" data-page="${esc(link.id)}">${icon(link.icon)}<span>${esc(link.label)}</span>${link.badge ? `<span class="nav-badge">${link.badge}</span>` : ""}</button>`).join("")}</nav><div class="sidebar-support"><span>${icon("shield", 16)} SERVICIO VERIFICADO</span><p>Viaja tranquilo.<br>Llega seguro.</p>${data.settings.support_phone ? `<a href="tel:${esc(String(data.settings.support_phone).replace(/[^\d+]/g, ""))}">${icon("phone", 15)} Soporte local</a>` : ""}</div><button class="sidebar-logout logout-button" data-action="logout">${icon("logout")}<span>Cerrar sesión</span></button></aside>`;
+    const header = `<header class="app-header"><button class="mobile-menu-button" data-action="open-sidebar" aria-label="Abrir menú">${icon("menu")}</button><span class="header-location">${icon("pin", 17)}${esc(data.settings.service_area)}</span><div class="header-actions"><span class="service-badge ${data.settings.service_enabled ? "" : "service-paused"}"><span></span>${data.settings.service_enabled ? "Servicio activo" : "Servicio pausado"}</span><button class="header-user" data-action="navigate" data-page="profile">${avatar(data.account.name, true)}<span>${esc(data.account.name.split(" ")[0])}</span></button></div></header>`;
+    const bottom = `<nav class="mobile-bottom-nav">${mobileLinks.map((link) => `<button class="${state.page === link.id ? "bottom-active" : ""}" data-action="navigate" data-page="${esc(link.id)}"><span>${icon(link.icon, 20)}${link.badge ? "<i></i>" : ""}</span><small>${esc(link.id === "organizations" ? "Grupos" : link.id === "passenger-preview" ? "Pedir" : link.id === "rides" ? "Viajes" : link.label)}</small></button>`).join("")}</nav>`;
+    app.innerHTML = `<main class="app-shell">${sidebar}${state.sidebar ? '<button class="sidebar-overlay" data-action="close-sidebar" aria-label="Cerrar menú"></button>' : ""}<section class="app-main">${header}<div class="app-content">${content()}</div></section>${bottom}</main>`;
+    prepareMaps();
+  }
+
+  function render() {
+    if (state.map) { state.map.destroy(); state.map = null; }
+    if (!state.data) renderAuth();
+    else renderShell();
+  }
+
+  function content() {
+    switch (state.page) {
+      case "overview": return overview();
+      case "organizations": return organizations();
+      case "drivers": return drivers();
+      case "rides": return rides(true);
+      case "settings": return settings();
+      case "passenger-preview":
+      case "request": return passenger();
+      case "driver-preview": return driverPanel(true);
+      case "driver-dashboard": return driverPanel(false);
+      case "history": return rides(false);
+      case "profile": return profile();
+      default: return state.data.account.role === "admin" ? overview() : passenger();
+    }
+  }
+
+  function overview() {
+    const data = state.data;
+    const available = data.drivers.filter((driver) => driver.active && driver.status === "available");
+    const active = data.rides.filter((ride) => ACTIVE.includes(ride.status));
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date());
+    const completed = data.rides.filter((ride) => ride.status === "completed" && new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date(ride.completed_at)) === today);
+    const income = completed.reduce((sum, ride) => sum + (ride.final_fare || ride.estimated_fare), 0);
+    const metrics = [
+      { icon: "car", label: "UNIDADES ACTIVAS", value: `${available.length}<small> / ${data.drivers.filter((driver) => driver.active).length}</small>`, note: "Disponibles para viajes" },
+      { icon: "route", label: "VIAJES EN CURSO", value: String(active.length), note: "Solicitados o atendidos" },
+      { icon: "building", label: "SINDICATOS", value: String(data.unions.filter((union) => union.active).length), note: `${data.groups.length} grupos registrados` },
+      { icon: "chart", label: "SERVICIOS DE HOY", value: money(income), note: `${completed.length} viajes terminados`, highlight: true },
+    ];
+    const steps = [
+      { done: data.unions.length > 0, label: "Registra tu primer sindicato", page: "organizations" },
+      { done: data.groups.length > 0, label: "Organiza los grupos de taxistas", page: "organizations" },
+      { done: data.drivers.length > 0, label: "Da de alta una unidad autorizada", page: "drivers" },
+    ];
+    const setup = steps.some((step) => !step.done) ? `<div class="setup-guide"><div><span>PUESTA EN MARCHA</span><h2>Deja lista tu central de taxis</h2></div><div>${steps.map((step, index) => `<button class="${step.done ? "setup-step-done" : ""}" data-action="navigate" data-page="${step.page}"><span>${step.done ? "✓" : index + 1}</span>${esc(step.label)}${icon("chevron", 16)}</button>`).join("")}</div></div>` : "";
+    const activity = data.activity.length ? `<div class="activity-list">${data.activity.slice(0, 8).map((item) => `<article class="activity-item"><span class="activity-bullet activity-${esc(item.action.split("_")[0])}"></span><div><p>${esc(item.description)}</p><small>${esc(when(item.created_at))}</small></div></article>`).join("")}</div>` : empty("clock", "Todavía no hay actividad", "Aquí aparecerán los movimientos de la central.");
+    return `<section class="content-section admin-overview">${section("CENTRAL DE OPERACIONES", "Así va Turicato hoy", "Controla sindicatos, unidades y servicios desde un solo lugar.", `<button class="primary-button top-action" data-action="open-driver-modal">${icon("plus")}<span>Registrar taxista</span></button>`)}<div class="metric-grid">${metrics.map((metric) => `<article class="metric-card ${metric.highlight ? "metric-highlight" : ""}"><span>${icon(metric.icon, 15)} ${esc(metric.label)}</span><strong>${metric.value}</strong><p>${esc(metric.note)}</p></article>`).join("")}</div>${setup}<div class="overview-lower"><div class="overview-map-card"><div class="subsection-heading"><div><h2>Mapa de operación</h2><p>${esc(data.settings.service_area)}</p></div><span class="live-indicator"><span></span> EN VIVO</span></div><div class="map-host taxi-map taxi-map-compact" data-map="overview"></div></div><div class="activity-card"><div class="subsection-heading"><div><h2>Actividad reciente</h2><p>Últimos movimientos</p></div></div>${activity}</div></div>${active.length ? `<div class="overview-rides"><div class="subsection-heading"><div><h2>Servicios por atender</h2></div><button class="link-button" data-action="navigate" data-page="rides">Ver todos ${icon("chevron", 15)}</button></div><div class="rides-grid">${active.slice(0, 3).map((ride) => rideCard(ride, true, true)).join("")}</div></div>` : ""}</section>`;
+  }
+
+  function organizations() {
+    const data = state.data;
+    const activeUnions = data.unions.filter((union) => union.active).length;
+    const heading = `<div class="button-pair"><button class="secondary-button" data-action="open-group-modal" ${activeUnions ? "" : "disabled"}>${icon("plus")} Grupo</button><button class="primary-button top-action" data-action="open-union-modal">${icon("plus")}<span>Sindicato</span></button></div>`;
+    const cards = data.unions.map((union) => {
+      const groups = data.groups.filter((group) => group.parent_id === union.id);
+      const count = data.drivers.filter((driver) => driver.union_id === union.id).length;
+      const groupList = groups.length ? `<div>${groups.map((group) => `<span class="group-label ${group.active ? "" : "group-inactive"}"><span style="background:${esc(group.color)}"></span>${esc(group.name)}<button data-action="toggle-organization" data-id="${esc(group.id)}" aria-label="Cambiar estado del grupo">${group.active ? "✓" : "○"}</button></span>`).join("")}</div>` : "<p>Este sindicato todavía no tiene grupos.</p>";
+      return `<article class="organization-card ${union.active ? "" : "organization-inactive"}"><div class="organization-head"><span class="organization-mark" style="background:${esc(union.color)}">${icon("building")}</span><div><h3>${esc(union.name)}</h3><p>${count} ${count === 1 ? "unidad" : "unidades"} · ${groups.length} ${groups.length === 1 ? "grupo" : "grupos"}</p></div><button class="state-toggle ${union.active ? "state-on" : ""}" data-action="toggle-organization" data-id="${esc(union.id)}" aria-label="Cambiar estado del sindicato"><span></span></button></div>${union.contact_name ? `<div class="organization-contact">${icon("users", 15)}${esc(union.contact_name)}${union.phone ? `<span>· ${esc(union.phone)}</span>` : ""}</div>` : ""}<div class="organization-groups"><span>GRUPOS REGISTRADOS</span>${groupList}</div></article>`;
+    }).join("");
+    return `<section class="content-section">${section("ORGANIZACIÓN DE TAXISTAS", "Sindicatos y grupos", "Tú decides qué organizaciones y bases pueden operar.", heading)}<div class="organization-metrics"><div><strong>${activeUnions}</strong><span>Sindicatos activos</span></div><div><strong>${data.groups.filter((group) => group.active).length}</strong><span>Grupos autorizados</span></div><div><strong>${data.drivers.filter((driver) => driver.active).length}</strong><span>Taxistas registrados</span></div></div>${cards ? `<div class="organizations-grid">${cards}</div>` : empty("building", "Tu central todavía no tiene sindicatos", "Comienza registrando un sindicato; después podrás crear sus grupos y dar de alta a sus taxistas.", `<button class="primary-button empty-action" data-action="open-union-modal">${icon("plus")}<span>Registrar el primer sindicato</span></button>`)}</section>`;
+  }
+
+  function driverCard(driver) {
+    const labels = { available: "Disponible", busy: "En viaje", suspended: "Suspendido", offline: "Desconectado" };
+    return `<article class="driver-card ${driver.active ? "" : "driver-suspended"}"><div class="driver-card-top">${avatar(driver.name)}<div><h3>${esc(driver.name)}</h3><span>${esc(driver.union_name)}${driver.group_name ? ` · ${esc(driver.group_name)}` : ""}</span></div><span class="driver-state state-${esc(driver.status)}">${esc(labels[driver.status] || driver.status)}</span></div><div class="driver-unit-strip"><div><span>UNIDAD</span><strong>${esc(driver.unit_number)}</strong></div><div><span>PLACAS</span><strong>${esc(driver.plate)}</strong></div><div><span>CALIFICACIÓN</span><strong>★ ${Number(driver.rating).toFixed(1)}</strong></div></div><div class="driver-details"><span>${icon("car", 16)}${esc(driver.vehicle)} · ${esc(driver.vehicle_color)}</span><span>${icon("pin", 16)}${esc(driver.zone)}</span>${driver.phone ? `<span>${icon("phone", 16)}${esc(driver.phone)}</span>` : ""}</div><div class="driver-card-actions"><span class="verified-mark">${icon("shield", 15)}${driver.active ? "Unidad verificada" : "Cuenta suspendida"}</span><div class="driver-admin-actions"><button class="reset-password-button" data-action="open-reset-password" data-id="${esc(driver.id)}" title="Cambiar contraseña">${icon("key", 15)}</button><button class="${driver.active ? "suspend-button" : "reactivate-button"}" data-action="toggle-driver" data-id="${esc(driver.id)}">${driver.active ? "Suspender" : "Reactivar"}</button></div></div></article>`;
+  }
+
+  function drivers() {
+    const data = state.data;
+    const unions = data.unions.filter((union) => union.active);
+    const filtered = data.drivers.filter((driver) => (state.unionFilter === "all" || driver.union_id === state.unionFilter) && `${driver.name} ${driver.plate} ${driver.unit_number}`.toLowerCase().includes(state.driverSearch.toLowerCase()));
+    const filters = data.drivers.length ? `<div class="driver-filters"><label class="search-box">${icon("search")}<input data-input="driver-search" placeholder="Buscar por nombre, placas o unidad…" value="${esc(state.driverSearch)}"></label><select data-change="union-filter"><option value="all">Todos los sindicatos</option>${unions.map((union) => `<option value="${esc(union.id)}" ${state.unionFilter === union.id ? "selected" : ""}>${esc(union.name)}</option>`).join("")}</select></div>` : "";
+    return `<section class="content-section">${section("UNIDADES AUTORIZADAS", "Taxistas registrados", "Solo tú puedes dar de alta, verificar o suspender conductores.", `<button class="primary-button top-action" data-action="open-driver-modal">${icon("plus")}<span>Dar de alta</span></button>`)}${filters}${filtered.length ? `<div class="drivers-grid">${filtered.map(driverCard).join("")}</div>` : empty("car", data.drivers.length ? "No encontramos coincidencias" : "Todavía no hay unidades registradas", data.drivers.length ? "Prueba otro nombre, número de unidad o sindicato." : "Los taxistas no pueden inscribirse por su cuenta. Tú autorizas cada unidad.", `<button class="primary-button empty-action" data-action="open-driver-modal">${icon("plus")}<span>${unions.length ? "Registrar primer taxista" : "Primero registra un sindicato"}</span></button>`)}</section>`;
+  }
+
+  function rideCard(ride, showPassenger = false, admin = false) {
+    const person = showPassenger ? `<div class="ride-person">${avatar(ride.passenger_name, true)}<span>${esc(ride.passenger_name)}</span>${ride.passenger_phone ? `<a class="ride-call" href="tel:${esc(String(ride.passenger_phone).replace(/[^\d+]/g, ""))}" aria-label="Llamar al pasajero">${icon("phone", 16)}</a>` : ""}</div>` : ride.driver_name ? `<div class="ride-person">${avatar(ride.driver_name, true)}<span>${esc(ride.driver_name)} · Unidad ${esc(ride.driver_unit)}</span></div>` : "";
+    const available = state.data.drivers.filter((driver) => driver.active && driver.status === "available");
+    let actions = "";
+    if (admin && ride.status === "requested") {
+      actions = available.length ? `<div class="manual-assignment"><select data-assignment="${esc(ride.id)}">${available.map((driver) => `<option value="${esc(driver.id)}">Unidad ${esc(driver.unit_number)} · ${esc(driver.name)}</option>`).join("")}</select><button class="primary-button action-wide" data-action="assign-ride" data-id="${esc(ride.id)}"><span>Asignar unidad</span>${icon("arrow")}</button></div>` : "<div class=\"manual-assignment\"><p>No hay unidades conectadas para asignar.</p></div>";
+    }
+    if (admin && ["requested", "accepted", "arrived"].includes(ride.status)) actions += `<button class="text-danger-button cancel-small" data-action="cancel-ride" data-id="${esc(ride.id)}">Cancelar viaje</button>`;
+    return `<article class="ride-card"><div class="ride-card-head"><div><span class="folio-label">${esc(ride.folio)}</span><span class="ride-time">${esc(when(ride.created_at))}</span></div>${rideStatus(ride.status)}</div>${routePreview(ride.pickup_label, ride.destination_label, true)}<div class="ride-card-meta"><span>${icon("route", 15)}${ride.distance_km} km</span><span>${icon("users", 15)}${ride.passengers}</span><strong>${money(ride.final_fare || ride.estimated_fare)}</strong></div>${person}${actions ? `<div class="ride-card-actions">${actions}</div>` : ""}</article>`;
+  }
+
+  function rides(admin) {
+    const data = state.data;
+    const isDriver = data.account.role === "driver";
+    const own = isDriver ? data.rides.filter((ride) => ride.driver_id === data.ownDriver?.id) : data.rides;
+    const list = own.filter((ride) => state.rideFilter === "all" || (state.rideFilter === "active" && ACTIVE.includes(ride.status)) || ride.status === state.rideFilter);
+    const filters = [["all", "Todos"], ["active", "Activos"], ["completed", "Completados"], ["cancelled", "Cancelados"]];
+    return `<section class="content-section">${section(admin ? "DESPACHO DE UNIDADES" : "TU HISTORIAL", admin ? "Servicios y solicitudes" : isDriver ? "Mis servicios" : "Mis viajes", admin ? "Supervisa cada viaje y asigna un taxista cuando sea necesario." : "Consulta las unidades, rutas y tarifas de tus servicios.")}<div class="filter-row">${filters.map(([key, label]) => `<button class="quick-chip ${state.rideFilter === key ? "quick-chip-active" : ""}" data-action="ride-filter" data-value="${key}">${esc(label)}</button>`).join("")}</div>${list.length ? `<div class="rides-grid">${list.map((ride) => rideCard(ride, admin || isDriver, admin)).join("")}</div>` : empty("route", "Todavía no hay viajes en esta sección", "Cuando se registre un servicio aparecerá aquí con todos sus detalles.")}</section>`;
+  }
+
+  function activeRidePanel(ride) {
+    const headline = { requested: "Estamos buscando tu taxi", accepted: "Tu taxista viene por ti", arrived: "Tu taxi ya está aquí", in_progress: "Buen viaje" }[ride.status];
+    const detail = ride.status === "requested" ? "Los taxistas autorizados ya pueden aceptar tu solicitud." : `Viajas con ${ride.driver_name || "una unidad verificada"}.`;
+    const driver = ride.driver_name ? `<div class="assigned-driver">${avatar(ride.driver_name)}<div><strong>${esc(ride.driver_name)}</strong><span>Unidad ${esc(ride.driver_unit)} · ${esc(ride.driver_plate)}</span><small>${esc(ride.driver_vehicle)} · ${esc(ride.union_name)}</small></div>${ride.driver_phone ? `<a class="round-contact" href="tel:${esc(String(ride.driver_phone).replace(/[^\d+]/g, ""))}" aria-label="Llamar al taxista">${icon("phone")}</a>` : ""}</div>` : "";
+    const code = ride.security_code && ride.status !== "in_progress" ? `<div class="security-code-box"><div><span>CÓDIGO DE SEGURIDAD</span><strong>${esc(ride.security_code)}</strong></div><p>Compártelo únicamente cuando estés junto al taxista.</p></div>` : "";
+    return `<section class="content-section passenger-live">${section("TU SERVICIO", "Tu viaje está en marcha", "Aquí verás cualquier cambio en cuanto ocurra.")}<div class="passenger-layout"><div class="ride-live-panel">${rideStatus(ride.status)}<h2>${esc(headline)}</h2><p class="live-subtitle">${esc(detail)}</p>${routePreview(ride.pickup_label, ride.destination_label)}${driver}${code}<div class="fare-summary"><span>Tarifa estimada</span><strong>${money(ride.estimated_fare)}</strong></div>${ride.status !== "in_progress" ? `<button class="text-danger-button" data-action="cancel-ride" data-id="${esc(ride.id)}">Cancelar solicitud</button>` : ""}<a class="emergency-link" href="tel:911">${icon("shield", 15)} Emergencias: 911</a></div><div class="map-host taxi-map" data-map="ride" data-id="${esc(ride.id)}"></div></div></section>`;
+  }
+
+  function passenger() {
+    const data = state.data;
+    const current = data.rides.find((ride) => ride.passenger_email === data.account.email && ACTIVE.includes(ride.status));
+    if (current) return activeRidePanel(current);
+    const draft = state.draft;
+    const quote = calculateQuote();
+    const available = data.drivers.filter((driver) => driver.status === "available").length;
+    const newest = data.rides.find((ride) => ride.passenger_email === data.account.email && ride.status === "completed" && !ride.rating);
+    const rating = newest ? `<div class="rating-card"><div><h3>¿Cómo estuvo tu último viaje?</h3><p>Califica a ${esc(newest.driver_name || "tu taxista")}.</p></div><div class="rating-stars">${[1, 2, 3, 4, 5].map((value) => `<button class="star-on" data-action="rate-ride" data-id="${esc(newest.id)}" data-value="${value}" aria-label="${value} estrellas">★</button>`).join("")}</div></div>` : "";
+
+    return `<section class="content-section">${section("VIAJA POR TURICATO", "¿A dónde te llevamos?", "Marca los puntos en el mapa o elige una referencia conocida.")}<div class="passenger-layout"><div class="ride-builder"><div class="builder-route"><div class="location-input-row ${draft.selecting === "pickup" ? "location-focused" : ""}" data-action="select-pickup"><span class="location-indicator indicator-green"></span><span><small>PUNTO DE PARTIDA</small><input data-input="pickup-label" placeholder="¿Dónde estás?" value="${esc(draft.pickup.label)}"></span><button class="location-gps gps-button" data-action="locate-me" aria-label="Usar mi ubicación">${icon("location")}</button></div><div class="location-input-row ${draft.selecting === "destination" ? "location-focused" : ""}" data-action="select-destination"><span class="location-indicator indicator-orange"></span><span><small>DESTINO</small><input data-input="destination-label" placeholder="¿A dónde vas?" value="${esc(draft.destination?.label || "")}"></span>${icon("pin")}</div></div><div class="builder-quick"><span>REFERENCIAS CONOCIDAS</span><div>${PLACES.map((place, index) => `<button class="quick-chip ${draft.destination?.label === place.label ? "quick-chip-active" : ""}" data-action="choose-place" data-value="${index}">${esc(place.label)}</button>`).join("")}</div></div><div class="passenger-count"><div>${icon("users")}<span>Pasajeros</span></div><div><button data-action="passengers-minus" ${draft.passengers <= 1 ? "disabled" : ""}>−</button><strong>${draft.passengers}</strong><button data-action="passengers-plus" ${draft.passengers >= 4 ? "disabled" : ""}>+</button></div></div><div class="payment-selector"><span>FORMA DE PAGO</span><div><button class="${draft.payment === "cash" ? "payment-selected" : ""}" data-action="choose-payment" data-value="cash">${icon("banknote", 17)} Efectivo</button><button class="${draft.payment === "transfer" ? "payment-selected" : ""}" data-action="choose-payment" data-value="transfer">${icon("transfer", 17)} Transferencia</button></div></div><textarea class="notes-input" data-input="ride-notes" rows="2" maxlength="240" placeholder="Alguna referencia: portón azul, frente a la tienda…">${esc(draft.notes)}</textarea>${quote ? `<div class="fare-estimate"><div><span>TARIFA ESTIMADA</span><strong>${money(quote.fare)}</strong></div><small>${quote.km} km aproximados</small></div>` : ""}<button class="primary-button request-button" data-action="request-ride" ${draft.destination?.label?.trim().length >= 3 && data.settings.service_enabled ? "" : "disabled"}><span>${data.settings.service_enabled ? "Solicitar taxi verificado" : "Servicio temporalmente en pausa"}</span>${icon("arrow")}</button><div class="availability-note ${available ? "" : "availability-empty"}"><span></span>${available ? `${available} ${available === 1 ? "taxista disponible" : "taxistas disponibles"}` : "Tu solicitud aparecerá cuando se conecte una unidad"}</div></div><div class="map-host taxi-map" data-map="request"></div></div>${rating}</section>`;
+  }
+
+  function selectedDriver(preview) {
+    if (!preview) return state.data.ownDriver;
+    return state.data.drivers.find((driver) => driver.id === state.selectedDriver) || state.data.drivers[0] || null;
+  }
+
+  function driverPanel(preview) {
+    const data = state.data;
+    const driver = selectedDriver(preview);
+    if (!driver) return `<section class="content-section">${section("PANEL DE UNIDAD", "Operación de taxistas")}${empty("car", "Aún no hay taxistas autorizados", "Primero registra un sindicato y da de alta al menos a un taxista.")}</section>`;
+    const current = data.rides.find((ride) => ride.driver_id === driver.id && ["accepted", "arrived", "in_progress"].includes(ride.status));
+    const incoming = data.rides.filter((ride) => ride.status === "requested");
+    const statusLabel = driver.status === "available" ? "Disponible" : driver.status === "busy" ? "En servicio" : "Desconectado";
+    const button = `<button class="availability-switch ${driver.status === "available" ? "switch-available" : driver.status === "busy" ? "switch-busy" : ""}" data-action="toggle-driver-status" data-id="${esc(driver.id)}" ${driver.status === "busy" ? "disabled" : ""}><span></span>${statusLabel}</button>`;
+    const picker = preview && data.drivers.length > 1 ? `<div class="driver-preview-picker">${icon("car")}<select data-change="preview-driver">${data.drivers.map((item) => `<option value="${esc(item.id)}" ${item.id === driver.id ? "selected" : ""}>Unidad ${esc(item.unit_number)} · ${esc(item.name)}</option>`).join("")}</select></div>` : "";
+    const summary = `<div class="driver-summary"><div>${icon("shield")}<span>${esc(driver.union_name)}<small>${esc(driver.group_name || "Sindicato autorizado")}</small></span></div><div>${icon("car")}<span>${esc(driver.vehicle)}<small>${esc(driver.plate)} · ${esc(driver.vehicle_color)}</small></span></div><div>${icon("star")}<span>${Number(driver.rating).toFixed(1)}<small>${driver.completed_trips} viajes completos</small></span></div></div>`;
+    let services;
+
+    if (current) {
+      const heading = current.status === "accepted" ? "Ve al punto de partida" : current.status === "arrived" ? "Solicita el código al pasajero" : "Lleva al pasajero a su destino";
+      const submit = current.status === "accepted" ? "Ya llegué por el pasajero" : current.status === "arrived" ? "Verificar código e iniciar viaje" : "Finalizar viaje";
+      const code = current.status === "arrived" ? '<label class="form-field"><span>Código de seguridad</span><input class="security-code-input" id="ride-security-code" inputmode="numeric" maxlength="4" placeholder="0000"><small>El pasajero puede verlo en su pantalla.</small></label>' : "";
+      services = `<div class="driver-active-layout"><div class="driver-active-card">${rideStatus(current.status)}<h2>${esc(heading)}</h2>${routePreview(current.pickup_label, current.destination_label)}<div class="assigned-driver">${avatar(current.passenger_name)}<div><strong>${esc(current.passenger_name)}</strong><span>${current.passengers} pasajero${current.passengers === 1 ? "" : "s"}</span>${current.notes ? `<small>${esc(current.notes)}</small>` : ""}</div>${current.passenger_phone ? `<a class="round-contact" href="tel:${esc(String(current.passenger_phone).replace(/[^\d+]/g, ""))}">${icon("phone")}</a>` : ""}</div>${code}<div class="fare-summary"><span>${current.payment_method === "cash" ? "Cobrar en efectivo" : "Pago por transferencia"}</span><strong>${money(current.estimated_fare)}</strong></div><button class="primary-button action-wide" data-action="advance-ride" data-id="${esc(current.id)}"><span>${esc(submit)}</span>${icon("arrow")}</button>${current.status !== "in_progress" ? `<button class="text-danger-button" data-action="cancel-ride" data-id="${esc(current.id)}">Cancelar servicio</button>` : ""}</div><div class="map-host taxi-map" data-map="ride" data-id="${esc(current.id)}"></div></div>`;
+    } else if (incoming.length && driver.status === "available") {
+      services = `<div class="subsection-heading"><div><h2>Solicitudes disponibles</h2><p>Acepta un servicio cuando puedas atenderlo.</p></div><span class="count-badge">${incoming.length}</span></div><div class="rides-grid">${incoming.map((ride) => `<div class="driver-ride-wrapper">${rideCard(ride, true)}<button class="primary-button action-wide accept-ride-button" data-action="accept-ride" data-id="${esc(ride.id)}" data-driver="${esc(driver.id)}"><span>Aceptar por ${money(ride.estimated_fare)}</span>${icon("arrow")}</button></div>`).join("")}</div>`;
+    } else {
+      services = `<div class="subsection-heading"><div><h2>Solicitudes disponibles</h2><p>${driver.status === "available" ? "Acepta un viaje cuando quieras atenderlo." : "Conéctate para comenzar a recibir servicios."}</p></div></div>${empty("bell", driver.status === "available" ? "Por ahora no hay solicitudes" : "Tu unidad está desconectada", driver.status === "available" ? "Te avisaremos aquí cuando un pasajero solicite una unidad." : "Activa el botón de disponibilidad para recibir solicitudes.")}`;
+    }
+    return `<section class="content-section">${section(`UNIDAD ${driver.unit_number}`, `Hola, ${driver.name.split(" ")[0]}`, "Administra tu disponibilidad y acepta únicamente viajes autorizados.", button)}${picker}${summary}${services}</section>`;
+  }
+
+  function settings() {
+    const configuration = state.data.settings;
+    return `<section class="content-section">${section("CONTROL DEL SERVICIO", "Configuración", "Ajusta los costos, el área de atención y la disponibilidad general.")}<form class="settings-form" data-form="settings"><div class="settings-block"><div class="settings-block-title">${icon("banknote")}<div><h2>Tarifas y estimaciones</h2><p>Los pasajeros verán un estimado antes de solicitar la unidad.</p></div></div><div class="form-grid settings-grid">${[["baseFare", "Tarifa base", configuration.base_fare], ["farePerKm", "Costo por kilómetro", configuration.fare_per_km], ["minimumFare", "Tarifa mínima", configuration.minimum_fare]].map(([key, label, amount]) => `<label class="form-field"><span>${esc(label)}</span><div class="currency-input"><span>$</span><input name="${key}" type="number" min="0" required value="${esc(amount)}"></div></label>`).join("")}</div><p class="estimate-explanation">Un viaje de 3 km cuesta aproximadamente <strong>${money(Math.max(configuration.minimum_fare, configuration.base_fare + configuration.fare_per_km * 3))}</strong>.</p></div><div class="settings-block"><div class="settings-block-title">${icon("pin")}<div><h2>Área de operación y soporte</h2><p>Datos visibles para quienes soliciten una unidad.</p></div></div><div class="form-grid"><label class="form-field"><span>Zona atendida</span><input name="serviceArea" value="${esc(configuration.service_area)}"></label><label class="form-field"><span>Teléfono de soporte</span><input name="supportPhone" inputmode="tel" value="${esc(configuration.support_phone)}" placeholder="Número de atención"></label></div></div><div class="settings-block service-toggle-card"><div><strong>Recepción de solicitudes</strong><p>${configuration.service_enabled ? "Los pasajeros pueden pedir taxis normalmente." : "Las solicitudes nuevas están temporalmente detenidas."}</p></div><label class="switch-checkbox"><input type="checkbox" name="serviceEnabled" ${configuration.service_enabled ? "checked" : ""}><span></span></label></div><button class="primary-button settings-save" type="submit">${icon("check")}<span>Guardar configuración</span></button></form></section>`;
+  }
+
+  function profile() {
+    const account = state.data.account;
+    const role = account.role === "admin" ? "Administración" : account.role === "driver" ? "Taxista autorizado" : "Pasajero";
+    return `<section class="content-section">${section("TU INFORMACIÓN", "Mi perfil", "Tus datos solo se comparten cuando son necesarios para atender un servicio.")}<form class="profile-form" data-form="profile"><div class="profile-header">${avatar(account.name)}<div><h2>${esc(account.name)}</h2><span>${esc(role)}</span></div></div><label class="form-field"><span>Nombre completo</span><input name="name" required value="${esc(account.name)}"></label><label class="form-field"><span>Número de teléfono</span><input name="phone" inputmode="tel" value="${esc(account.phone)}"><small>Se comparte únicamente con la unidad asignada.</small></label><label class="form-field"><span>Correo de acceso</span><input value="${esc(account.email)}" disabled></label><button class="primary-button action-wide" type="submit"><span>Guardar mis datos</span>${icon("check")}</button><button class="secondary-button" data-action="open-change-password" type="button">${icon("key")} Cambiar mi contraseña</button></form><div class="privacy-card">${icon("shield")}<div><strong>Tu privacidad está protegida</strong><p>La ubicación se comparte únicamente al solicitar un servicio. La plataforma no realiza rastreo continuo.</p></div></div></section>`;
+  }
+
+  function modal(title, subtitle, body, wide = false) {
+    dialogs.innerHTML = `<div class="modal-backdrop" data-action="modal-backdrop"><section class="modal-card ${wide ? "modal-wide" : ""}" role="dialog" aria-modal="true"><div class="modal-top"><div><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div><button class="icon-button" data-action="close-modal" aria-label="Cerrar">${icon("x")}</button></div>${body}</section></div>`;
+    setTimeout(() => dialogs.querySelector("input:not([type=hidden]),select")?.focus(), 30);
+  }
+
+  function closeModal() {
+    state.modal = null;
+    dialogs.innerHTML = "";
+  }
+
+  function organizationModal(kind) {
+    const unions = state.data.unions.filter((union) => union.active);
+    if (kind === "group" && !unions.length) return toast("Primero registra un sindicato activo.", true);
+    state.modal = { type: kind, color: COLORS[(state.data.unions.length + state.data.groups.length) % COLORS.length] };
+    const label = kind === "union" ? "sindicato" : "grupo";
+    const parent = kind === "group" ? `<label class="form-field"><span>Sindicato al que pertenece</span><select name="parentId" required>${unions.map((union) => `<option value="${esc(union.id)}">${esc(union.name)}</option>`).join("")}</select></label>` : "";
+    const colors = COLORS.map((color) => `<button type="button" data-action="choose-color" data-value="${color}" class="${state.modal.color === color ? "color-active" : ""}" style="background:${color}" aria-label="Color ${color}"></button>`).join("");
+    modal(`Registrar ${label}`, "Solo administración puede autorizar organizaciones.", `<form class="modal-form" data-form="organization"><input type="hidden" name="kind" value="${kind}"><input type="hidden" name="color" value="${state.modal.color}"><label class="form-field"><span>Nombre del ${label}</span><input name="name" required placeholder="${kind === "union" ? "Ej. Sindicato de Taxistas Turicato" : "Ej. Base Centro"}"></label>${parent}<div class="form-grid"><label class="form-field"><span>Nombre de contacto</span><input name="contactName" placeholder="Responsable"></label><label class="form-field"><span>Teléfono</span><input name="phone" inputmode="tel" placeholder="10 dígitos"></label></div><label class="form-field"><span>Color distintivo</span><div class="color-options">${colors}</div></label><button class="primary-button action-wide" type="submit"><span>Guardar ${label}</span>${icon("check")}</button></form>`);
+  }
+
+  function driverModal() {
+    const unions = state.data.unions.filter((union) => union.active);
+    if (!unions.length) { state.page = "organizations"; render(); return toast("Primero debes registrar un sindicato activo.", true); }
+    state.modal = { type: "driver" };
+    const firstUnion = unions[0].id;
+    const groups = state.data.groups.filter((group) => group.parent_id === firstUnion && group.active);
+    modal("Dar de alta a un taxista", "Tú defines el correo y la contraseña inicial que utilizará para ingresar.", `<form class="modal-form" data-form="driver"><div class="form-group-title">${icon("users")} DATOS DEL CONDUCTOR</div><div class="form-grid"><label class="form-field"><span>Nombre completo</span><input name="name" required placeholder="Nombre y apellidos"></label><label class="form-field"><span>Correo de acceso</span><input name="email" type="email" required placeholder="taxista@correo.com"></label><label class="form-field"><span>Número de teléfono</span><input name="phone" required inputmode="tel" placeholder="10 dígitos"></label><label class="form-field"><span>Contraseña inicial</span><input name="password" required minlength="8" placeholder="Mínimo 8 caracteres"><small>Entrégala directamente al conductor.</small></label></div><div class="form-group-title">${icon("building")} ORGANIZACIÓN Y UNIDAD</div><div class="form-grid"><label class="form-field"><span>Sindicato</span><select name="unionId" data-change="modal-union" required>${unions.map((union) => `<option value="${esc(union.id)}">${esc(union.name)}</option>`).join("")}</select></label><label class="form-field"><span>Grupo o base</span><select name="groupId" id="driver-group-select"><option value="">Sin grupo asignado</option>${groups.map((group) => `<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("")}</select></label><label class="form-field"><span>Número de unidad</span><input name="unitNumber" required placeholder="Ej. 024"></label><label class="form-field"><span>Placas</span><input name="plate" required placeholder="ABC-123-D"></label><label class="form-field"><span>Vehículo y modelo</span><input name="vehicle" required placeholder="Nissan March 2022"></label><label class="form-field"><span>Color del vehículo</span><input name="vehicleColor" value="Blanco"></label><label class="form-field"><span>Zona habitual</span><input name="zone" value="Turicato centro"></label></div><div class="form-group-title">${icon("shield")} DOCUMENTACIÓN</div><div class="form-grid"><label class="form-field"><span>Número de licencia</span><input name="licenseNumber" placeholder="Opcional"><small>Solo administración puede verlo.</small></label><label class="form-field"><span>Número de permiso</span><input name="permitNumber" placeholder="Opcional"><small>Solo administración puede verlo.</small></label></div><button class="primary-button action-wide" type="submit"><span>Autorizar taxista y unidad</span>${icon("check")}</button></form>`, true);
+  }
+
+  function resetPasswordModal(driverId) {
+    const driver = state.data.drivers.find((item) => item.id === driverId);
+    if (!driver) return;
+    state.modal = { type: "reset", driverId };
+    modal("Cambiar contraseña del taxista", `Unidad ${driver.unit_number} · ${driver.name}`, `<form class="modal-form" data-form="reset-password"><input type="hidden" name="id" value="${esc(driver.id)}"><label class="form-field"><span>Nueva contraseña</span><input name="password" minlength="8" required placeholder="Mínimo 8 caracteres"><small>Entrégala directamente al conductor.</small></label><button class="primary-button action-wide" type="submit"><span>Actualizar contraseña</span>${icon("check")}</button></form>`);
+  }
+
+  function changePasswordModal() {
+    state.modal = { type: "password" };
+    modal("Cambiar mi contraseña", "Tu contraseña actual es necesaria para confirmar el cambio.", `<form class="modal-form" data-form="change-password"><label class="form-field"><span>Contraseña actual</span><input name="currentPassword" required type="password" autocomplete="current-password"></label><label class="form-field"><span>Nueva contraseña</span><input name="newPassword" minlength="8" required type="password" autocomplete="new-password"><small>Mínimo 8 caracteres.</small></label><button class="primary-button action-wide" type="submit"><span>Guardar nueva contraseña</span>${icon("check")}</button></form>`);
+  }
+
+  class InteractiveMap {
+    constructor(host, options) {
+      this.host = host;
+      this.options = options;
+      this.zoom = 15;
+      this.center = options.pickup || options.destination || CENTER;
+      this.gesture = null;
+      this.resizeObserver = null;
+      this.fit();
+      this.host.innerHTML = '<div class="map-canvas" role="application" aria-label="Mapa interactivo de Turicato"></div><div class="map-zoom-control"><button data-map-zoom="in" aria-label="Acercar">+</button><button data-map-zoom="out" aria-label="Alejar">−</button></div>' + (options.interactive ? `<div class="map-selection-hint"><span class="${state.draft.selecting === "pickup" ? "hint-dot-green" : "hint-dot-orange"}"></span>Toca el mapa para marcar ${state.draft.selecting === "pickup" ? "la partida" : "el destino"}</div>` : "") + '<a class="map-attribution" target="_blank" rel="noreferrer" href="https://www.openstreetmap.org/copyright">© OpenStreetMap</a>';
+      this.canvas = this.host.querySelector(".map-canvas");
+      this.bind();
+      if (typeof ResizeObserver !== "undefined") {
+        this.resizeObserver = new ResizeObserver(() => this.draw());
+        this.resizeObserver.observe(this.host);
+      }
+      this.draw();
+    }
+
+    world(point, zoom = this.zoom) {
+      const scale = 256 * 2 ** zoom;
+      const latitude = Math.max(-85.0511, Math.min(85.0511, point.lat));
+      const sine = Math.sin(latitude * Math.PI / 180);
+      return { x: (point.lng + 180) / 360 * scale, y: (.5 - Math.log((1 + sine) / (1 - sine)) / (4 * Math.PI)) * scale };
+    }
+
+    coordinate(point) {
+      const scale = 256 * 2 ** this.zoom;
+      const latitude = Math.PI - 2 * Math.PI * point.y / scale;
+      return { lat: 180 / Math.PI * Math.atan(.5 * (Math.exp(latitude) - Math.exp(-latitude))), lng: point.x / scale * 360 - 180 };
+    }
+
+    fit() {
+      const pickup = this.options.pickup;
+      const destination = this.options.destination;
+      if (!pickup || !destination) return;
+      this.center = { lat: (pickup.lat + destination.lat) / 2, lng: (pickup.lng + destination.lng) / 2 };
+      const difference = Math.max(Math.abs(pickup.lat - destination.lat), Math.abs(pickup.lng - destination.lng));
+      this.zoom = difference > .08 ? 11 : difference > .035 ? 12 : difference > .014 ? 13 : difference > .006 ? 14 : 15;
+    }
+
+    bind() {
+      this.canvas.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) return;
+        this.canvas.setPointerCapture(event.pointerId);
+        this.gesture = { x: event.clientX, y: event.clientY, center: { ...this.center }, moved: false };
+      });
+      this.canvas.addEventListener("pointermove", (event) => {
+        if (!this.gesture) return;
+        const dx = event.clientX - this.gesture.x;
+        const dy = event.clientY - this.gesture.y;
+        if (Math.abs(dx) + Math.abs(dy) > 7) this.gesture.moved = true;
+        if (this.gesture.moved) {
+          const origin = this.world(this.gesture.center);
+          this.center = this.coordinate({ x: origin.x - dx, y: origin.y - dy });
+          this.draw();
+        }
+      });
+      this.canvas.addEventListener("pointerup", (event) => {
+        const gesture = this.gesture;
+        this.gesture = null;
+        if (!gesture?.moved && this.options.interactive) {
+          const box = this.host.getBoundingClientRect();
+          const center = this.world(this.center);
+          const location = this.coordinate({ x: center.x + event.clientX - box.left - box.width / 2, y: center.y + event.clientY - box.top - box.height / 2 });
+          chooseMapPoint(location);
+        }
+      });
+      this.canvas.addEventListener("pointercancel", () => { this.gesture = null; });
+      this.host.querySelectorAll("[data-map-zoom]").forEach((button) => button.addEventListener("click", () => {
+        this.zoom = Math.max(9, Math.min(18, this.zoom + (button.dataset.mapZoom === "in" ? 1 : -1)));
+        this.draw();
+      }));
+    }
+
+    draw() {
+      if (!this.canvas || !this.host.isConnected) return;
+      const width = this.host.clientWidth || 360;
+      const height = this.host.clientHeight || 300;
+      const center = this.world(this.center);
+      const startX = Math.floor((center.x - width / 2) / 256);
+      const endX = Math.floor((center.x + width / 2) / 256);
+      const startY = Math.floor((center.y - height / 2) / 256);
+      const endY = Math.floor((center.y + height / 2) / 256);
+      const scale = 2 ** this.zoom;
+      let tiles = "";
+
+      for (let x = startX; x <= endX; x++) {
+        for (let y = startY; y <= endY; y++) {
+          if (y < 0 || y >= scale) continue;
+          const tileX = ((x % scale) + scale) % scale;
+          const left = x * 256 - center.x + width / 2;
+          const top = y * 256 - center.y + height / 2;
+          tiles += `<span class="map-tile" aria-hidden="true" style="left:${left}px;top:${top}px;background-image:url(https://tile.openstreetmap.org/${this.zoom}/${tileX}/${y}.png)"></span>`;
+        }
+      }
+
+      const point = (coordinates) => {
+        if (!coordinates) return null;
+        const position = this.world(coordinates);
+        return { x: position.x - center.x + width / 2, y: position.y - center.y + height / 2 };
+      };
+      const first = point(this.options.pickup);
+      const second = point(this.options.destination);
+      if (first && second) {
+        tiles += `<svg class="route-overlay" aria-hidden="true" viewBox="0 0 ${width} ${height}"><path d="M ${first.x} ${first.y} C ${first.x + (second.x - first.x) * .33} ${first.y - 22}, ${second.x - (second.x - first.x) * .26} ${second.y + 22}, ${second.x} ${second.y}" fill="none" stroke="#134738" stroke-dasharray="8 7" stroke-linecap="round" stroke-width="3.5"></path></svg>`;
+      }
+      if (first) tiles += `<span class="map-pin map-pin-pickup" style="left:${first.x}px;top:${first.y}px"><span>A</span></span>`;
+      if (second) tiles += `<span class="map-pin map-pin-destination" style="left:${second.x}px;top:${second.y}px"><span>B</span></span>`;
+      this.canvas.innerHTML = tiles;
+    }
+
+    destroy() {
+      if (this.resizeObserver) this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+  }
+
+  function prepareMaps() {
+    const host = app.querySelector(".map-host");
+    if (!host) return;
+    const kind = host.dataset.map;
+    if (kind === "request") {
+      state.map = new InteractiveMap(host, { pickup: state.draft.pickup, destination: state.draft.destination, interactive: true });
+    } else if (kind === "ride") {
+      const ride = state.data.rides.find((item) => item.id === host.dataset.id);
+      if (ride) state.map = new InteractiveMap(host, { pickup: { lat: ride.pickup_lat, lng: ride.pickup_lng }, destination: { lat: ride.destination_lat, lng: ride.destination_lng } });
+    } else {
+      const ride = state.data.rides.find((item) => ACTIVE.includes(item.status));
+      state.map = new InteractiveMap(host, { pickup: ride ? { lat: ride.pickup_lat, lng: ride.pickup_lng } : CENTER, destination: ride ? { lat: ride.destination_lat, lng: ride.destination_lng } : null });
+    }
+  }
+
+  function chooseMapPoint(coordinates) {
+    const label = `Punto marcado · ${coordinates.lat.toFixed(4)}, ${coordinates.lng.toFixed(4)}`;
+    if (state.draft.selecting === "pickup") {
+      state.draft.pickup = { ...coordinates, label };
+      state.draft.selecting = "destination";
+    } else {
+      state.draft.destination = { ...coordinates, label };
+    }
+    render();
+  }
+
+  async function submitForm(form) {
+    const values = Object.fromEntries(new FormData(form));
+    switch (form.dataset.form) {
+      case "login": {
+        const result = await request("login", values, { message: "Inicio de sesión correcto." });
+        if (result?.account && state.gate === "driver" && result.account.role !== "driver") toast("Iniciaste con una cuenta que no está registrada como taxista.", true);
+        break;
+      }
+      case "register": await request("registerPassenger", values, { message: "Tu cuenta de pasajero está lista." }); break;
+      case "organization": await request("createOrganization", values, { closeModal: true, message: `${values.kind === "union" ? "Sindicato" : "Grupo"} registrado correctamente.` }); break;
+      case "driver": await request("createDriver", values, { closeModal: true, message: "Taxista y unidad autorizados correctamente." }); break;
+      case "reset-password": await request("resetDriverPassword", values, { closeModal: true, message: "La contraseña del taxista se actualizó." }); break;
+      case "change-password": await request("changePassword", values, { closeModal: true, message: "Tu contraseña se actualizó." }); break;
+      case "profile": await request("saveProfile", values, { message: "Tu perfil se actualizó." }); break;
+      case "settings": await request("saveSettings", { ...values, serviceEnabled: form.elements.serviceEnabled.checked }, { message: "Se actualizó la configuración del servicio." }); break;
+      default: break;
+    }
+  }
+
+  function buttonAction(button, event) {
+    const action = button.dataset.action;
+    if (!action) return;
+
+    if (action === "choose-gate") { state.gate = button.dataset.value; render(); return; }
+    if (action === "auth-register") { state.authMode = "register"; state.gate = "passenger"; render(); return; }
+    if (action === "auth-login") { state.authMode = "login"; render(); return; }
+    if (action === "navigate") { state.page = button.dataset.page; state.sidebar = false; state.rideFilter = "all"; render(); return; }
+    if (action === "open-sidebar") { state.sidebar = true; render(); return; }
+    if (action === "close-sidebar") { state.sidebar = false; render(); return; }
+    if (action === "close-toast") { notifications.innerHTML = ""; return; }
+    if (action === "logout") { void request("logout"); return; }
+    if (action === "close-modal") { closeModal(); return; }
+    if (action === "modal-backdrop" && event.target === button) { closeModal(); return; }
+    if (action === "open-union-modal") { organizationModal("union"); return; }
+    if (action === "open-group-modal") { organizationModal("group"); return; }
+    if (action === "open-driver-modal") { driverModal(); return; }
+    if (action === "open-reset-password") { resetPasswordModal(button.dataset.id); return; }
+    if (action === "open-change-password") { changePasswordModal(); return; }
+
+    if (action === "choose-color") {
+      const color = button.dataset.value;
+      if (!COLORS.includes(color)) return;
+      dialogs.querySelector('[name="color"]').value = color;
+      dialogs.querySelectorAll(".color-options button").forEach((item) => item.classList.toggle("color-active", item.dataset.value === color));
+      return;
+    }
+
+    if (action === "toggle-organization") { void request("toggleOrganization", { id: button.dataset.id }, { message: "Se actualizó la organización." }); return; }
+    if (action === "toggle-driver") { void request("toggleDriver", { id: button.dataset.id }, { message: "Se actualizó el estado del taxista." }); return; }
+    if (action === "ride-filter") { state.rideFilter = button.dataset.value; render(); return; }
+    if (action === "select-pickup") { if (event.target.closest("input,button")) return; state.draft.selecting = "pickup"; render(); return; }
+    if (action === "select-destination") { if (event.target.closest("input,button")) return; state.draft.selecting = "destination"; render(); return; }
+
+    if (action === "locate-me") {
+      event.stopPropagation();
+      if (!navigator.geolocation) return toast("Este dispositivo no admite geolocalización.", true);
+      navigator.geolocation.getCurrentPosition((position) => {
+        state.draft.pickup = { lat: position.coords.latitude, lng: position.coords.longitude, label: "Mi ubicación actual" };
+        state.draft.selecting = "destination";
+        render();
+      }, () => toast("No fue posible obtener tu ubicación. Revisa los permisos del navegador.", true), { enableHighAccuracy: true, timeout: 12000 });
+      return;
+    }
+
+    if (action === "choose-place") {
+      const place = PLACES[Number(button.dataset.value)];
+      if (!place) return;
+      if (state.draft.selecting === "pickup") { state.draft.pickup = { ...place }; state.draft.selecting = "destination"; }
+      else state.draft.destination = { ...place };
+      render();
+      return;
+    }
+
+    if (action === "passengers-minus") { state.draft.passengers = Math.max(1, state.draft.passengers - 1); render(); return; }
+    if (action === "passengers-plus") { state.draft.passengers = Math.min(4, state.draft.passengers + 1); render(); return; }
+    if (action === "choose-payment") { state.draft.payment = button.dataset.value === "transfer" ? "transfer" : "cash"; render(); return; }
+
+    if (action === "request-ride") {
+      const { pickup, destination, payment, passengers, notes } = state.draft;
+      if (!destination) return toast("Primero marca el punto de destino.", true);
+      void request("createRide", { pickupLabel: pickup.label, pickupLat: pickup.lat, pickupLng: pickup.lng, destinationLabel: destination.label, destinationLat: destination.lat, destinationLng: destination.lng, paymentMethod: payment, passengers, notes }, { message: "Tu solicitud se envió a los taxistas disponibles." });
+      return;
+    }
+
+    if (action === "toggle-driver-status") {
+      const driver = state.data.drivers.find((item) => item.id === button.dataset.id);
+      if (!driver) return;
+      const status = driver.status === "available" ? "offline" : "available";
+      void request("setDriverStatus", { driverId: driver.id, status }, { message: status === "available" ? "La unidad ya puede recibir viajes." : "La unidad se desconectó." });
+      return;
+    }
+
+    if (action === "accept-ride") { void request("acceptRide", { rideId: button.dataset.id, driverId: button.dataset.driver }, { message: "Aceptaste el servicio." }); return; }
+    if (action === "assign-ride") {
+      const select = button.closest(".manual-assignment")?.querySelector("select");
+      if (select) void request("acceptRide", { rideId: button.dataset.id, driverId: select.value }, { message: "La unidad se asignó correctamente." });
+      return;
+    }
+    if (action === "advance-ride") {
+      const code = app.querySelector("#ride-security-code")?.value || "";
+      void request("advanceRide", { rideId: button.dataset.id, securityCode: code }, { message: "Se actualizó el estado del servicio." });
+      return;
+    }
+    if (action === "cancel-ride") {
+      if (window.confirm("¿Deseas cancelar este servicio?")) void request("cancelRide", { rideId: button.dataset.id }, { message: "El viaje se canceló." });
+      return;
+    }
+    if (action === "rate-ride") { void request("rateRide", { rideId: button.dataset.id, rating: Number(button.dataset.value) }, { message: "Gracias por calificar tu viaje." }); }
+  }
+
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-action]");
+    if (trigger) buttonAction(trigger, event);
+  });
+
+  document.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-form]");
+    if (!form) return;
+    event.preventDefault();
+    void submitForm(form);
+  });
+
+  document.addEventListener("input", (event) => {
+    const input = event.target;
+    if (input.dataset.input === "pickup-label") state.draft.pickup.label = input.value;
+    if (input.dataset.input === "destination-label") {
+      if (!state.draft.destination) state.draft.destination = { ...CENTER, label: input.value };
+      else state.draft.destination.label = input.value;
+      const requestButton = app.querySelector('[data-action="request-ride"]');
+      if (requestButton) requestButton.disabled = input.value.trim().length < 3 || !state.data.settings.service_enabled;
+    }
+    if (input.dataset.input === "ride-notes") state.draft.notes = input.value;
+    if (input.dataset.input === "driver-search") state.driverSearch = input.value;
+  });
+
+  document.addEventListener("change", (event) => {
+    const select = event.target;
+    if (select.dataset.input === "driver-search") { render(); return; }
+    if (select.dataset.change === "union-filter") { state.unionFilter = select.value; render(); return; }
+    if (select.dataset.change === "preview-driver") { state.selectedDriver = select.value; render(); return; }
+    if (select.dataset.change === "modal-union") {
+      const options = state.data.groups.filter((group) => group.active && group.parent_id === select.value);
+      dialogs.querySelector("#driver-group-select").innerHTML = '<option value="">Sin grupo asignado</option>' + options.map((group) => `<option value="${esc(group.id)}">${esc(group.name)}</option>`).join("");
+    }
+  });
+
+  document.addEventListener("focusin", (event) => {
+    if (event.target.dataset.input === "pickup-label") state.draft.selecting = "pickup";
+    if (event.target.dataset.input === "destination-label") state.draft.selecting = "destination";
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.modal) closeModal();
+  });
+
+  setInterval(() => {
+    if (!state.data || state.modal || state.pending || document.hidden) return;
+    const focused = document.activeElement;
+    if (focused && /INPUT|TEXTAREA|SELECT/.test(focused.tagName)) return;
+    void refresh(true);
+  }, 12000);
+
+  void refresh();
+})();
+    </script>
+  </body>
+</html>

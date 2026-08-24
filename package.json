@@ -1,0 +1,17 @@
+{
+  "name": "taxi-turicato-netlify",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aplicación de taxis para Turicato con sindicatos, taxistas autorizados y datos compartidos en Netlify.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node --check netlify/functions/taxi.mjs",
+    "check": "node --check netlify/functions/taxi.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.7.13"
+  }
+}

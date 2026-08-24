@@ -1,0 +1,13 @@
+{
+  "name": "Taxi Turicato",
+  "short_name": "Taxi Turicato",
+  "description": "Taxis autorizados en Turicato, Michoacán.",
+  "lang": "es-MX",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#134738",
+  "background_color": "#f7f6f2",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
