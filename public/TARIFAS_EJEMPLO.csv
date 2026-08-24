@@ -1,0 +1,11 @@
+municipio,origen,destino,tarifa,recogida,eta_min,llegada,modo,recomendado,descuento_estudiante,latitud,longitud
+Puruarán,Centro,Cahulote,45,15,12,Plaza principal de Cahulote,persona,si,10,,
+Puruarán,Centro,Tacámbaro,80,15,15,Plaza principal de Tacámbaro,persona,si,10,,
+Puruarán,Centro,Turicato,60,15,12,Plaza principal de Turicato,persona,si,10,19.05299,-101.41863
+Puruarán,Centro,Caramicuas,55,15,14,Plaza principal de Caramicuas,persona,si,10,,
+Puruarán,Centro,Bachilleres,35,15,9,Entrada principal de Bachilleres,persona,si,10,,
+Turicato,Centro,Puruarán,60,15,12,Plaza principal de Puruarán,persona,si,10,19.09750,-101.52200
+Turicato,Centro,Tacámbaro,90,15,16,Plaza principal de Tacámbaro,persona,si,10,,
+Turicato,Centro,Cahulote,50,15,13,Plaza principal de Cahulote,persona,si,10,,
+Tacámbaro,Centro,Puruarán,80,15,15,Plaza principal de Puruarán,persona,si,10,19.09750,-101.52200
+Tacámbaro,Centro,Turicato,90,15,16,Plaza principal de Turicato,persona,si,10,19.05299,-101.41863

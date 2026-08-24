@@ -1,9 +1,9 @@
 {
   "name": "taxi-turicato-netlify",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Aplicación de taxis para Turicato con sindicatos, taxistas autorizados y datos compartidos en Netlify.",
+  "description": "Coordinación segura de sitios concesionados, taxistas, pasajeros, tarifas, descuentos, reportes y auditoría para Turicato y Puruarán.",
   "engines": {
     "node": ">=20"
   },
