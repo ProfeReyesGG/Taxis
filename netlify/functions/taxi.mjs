@@ -8,6 +8,8 @@ const COOKIE_NAME = "taxi_turicato";
 const SESSION_SECONDS = 60 * 60 * 24 * 7;
 const LEGAL_VERSION = "2026-08-24";
 const MAX_IMAGE_BYTES = 650_000;
+const MASTER_RESET_PHRASE = "REINICIAR TAXI TURICATO";
+const DEMO_DOMAIN = "demo.taxituricato.mx";
 const ACTIVE_RIDES = new Set(["requested", "accepted", "arrived", "in_progress"]);
 const COLORS = new Set(["#134738", "#537dd5", "#d58237", "#9556a1", "#bd4f5a", "#438e80"]);
 
@@ -171,6 +173,7 @@ function normalizeDatabase(database) {
     if (!Array.isArray(safe[key])) safe[key] = [];
   }
   if (!safe.login_attempts || typeof safe.login_attempts !== "object") safe.login_attempts = {};
+  if (safe.demo_run && typeof safe.demo_run !== "object") safe.demo_run = null;
   safe.settings = { ...DEFAULT_SETTINGS, ...(safe.settings || {}) };
   safe.version = 2;
   return safe;
@@ -213,6 +216,31 @@ function record(database, actor, action, description, relatedId = null) {
     related_id: relatedId,
     created_at: date(),
   });
+}
+
+function demoPhotoKey(kind) {
+  return `${kind}/${randomUUID()}.png`;
+}
+
+function escapeXml(input) {
+  return String(input || "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;",
+  }[character]));
+}
+
+function demoImage(kind, label) {
+  const palettes = {
+    site: ["#103c30", "#b9ec82"],
+    driver: ["#1a5142", "#d5f1dd"],
+    vehicle: ["#173b59", "#d8e8fa"],
+    passenger: ["#6e4634", "#fff1df"],
+    pickup: ["#59416d", "#eadbf6"],
+  };
+  const [background, foreground] = palettes[kind] || palettes.site;
+  const short = kind === "vehicle" ? "TAXI" : String(label || "DEMO").trim().split(/\s+/).slice(0, 2)
+    .map((part) => part[0] || "").join("").toUpperCase() || "TT";
+  const caption = escapeXml(String(label || "Perfil de prueba").slice(0, 44));
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420"><rect width="640" height="420" rx="34" fill="${background}"/><circle cx="320" cy="167" r="91" fill="${foreground}" opacity=".17"/><text x="320" y="192" text-anchor="middle" font-size="78" font-family="Arial,sans-serif" font-weight="700" fill="${foreground}">${escapeXml(short)}</text><text x="320" y="318" text-anchor="middle" font-size="25" font-family="Arial,sans-serif" fill="${foreground}">${caption}</text><text x="320" y="357" text-anchor="middle" font-size="16" font-family="Arial,sans-serif" fill="${foreground}" opacity=".74">PERFIL DE PRUEBA INTERNA</text></svg>`;
 }
 
 async function ensureAdministrator(configuration) {
@@ -516,6 +544,7 @@ function visibleState(database, account) {
     shared_opportunities: sharedOpportunities,
     reports,
     activity,
+    demo_run: account.role === "admin" ? database.demo_run || null : null,
     audit_log: account.role === "admin" ? database.activity : [],
     settings: database.settings,
     legal: publicLegalSettings(database.settings),
@@ -681,7 +710,7 @@ async function uploadPhoto(database, account, payload) {
   const allowed = account.role === "admin" ? ["driver", "vehicle", "site"] :
     account.role === "passenger" ? ["passenger", "pickup"] :
     account.role === "driver" ? ["driver", "vehicle"] :
-    account.role === "site" ? ["site"] : [];
+    account.role === "site" ? ["site", "driver", "vehicle"] : [];
   if (!allowed.length || !allowed.includes(payload.kind)) {
     throw new AppError("Tu cuenta no puede subir este tipo de fotografía.", 403);
   }
@@ -709,7 +738,17 @@ async function servePhoto(database, account, key) {
   if (!allowed) throw new AppError("No tienes permiso para consultar esta fotografía.", 403);
 
   const entry = await mediaStore().getWithMetadata(key, { type: "arrayBuffer", consistency: "strong" });
-  if (!entry) throw new AppError("Fotografía no encontrada.", 404);
+  if (!entry) {
+    const sample = driver?.demo_profile || site?.demo_profile || passenger?.demo_profile || ride?.demo_profile;
+    if (!sample) throw new AppError("Fotografía no encontrada.", 404);
+    const kind = key.split("/", 1)[0];
+    const label = kind === "vehicle" ? `${driver?.vehicle || "Taxi"} · ${driver?.unit_number || ""}` :
+      driver?.name || site?.name || passenger?.name || ride?.pickup_label || "Demostración";
+    return new Response(demoImage(kind, label), {
+      status: 200,
+      headers: { "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "private, max-age=300", "X-Content-Type-Options": "nosniff" },
+    });
+  }
   return new Response(entry.data, {
     status: 200,
     headers: {
@@ -797,6 +836,291 @@ async function registerPassenger(request, payload, configuration) {
   });
 }
 
+function expectDemoRejection(database, administrator, label, operation) {
+  try {
+    operation();
+  } catch (error) {
+    if (!(error instanceof AppError)) throw error;
+    record(database, administrator.email, "demo_assertion", `Prueba superada: ${label}. El sistema rechazó la operación: ${error.message}`);
+    return;
+  }
+  throw new AppError(`La prueba de seguridad falló: ${label}. No se guardaron los datos de demostración.`, 500);
+}
+
+function seedDemoScenario(database, administrator) {
+  if (database.demo_run || database.users.some((user) => user.demo_profile)) {
+    throw new AppError("La prueba integral ya existe en esta base. Reinicia la central antes de volver a generarla.", 409);
+  }
+  if (!database.settings.service_enabled) {
+    throw new AppError("Activa primero la recepción de solicitudes para ejecutar la prueba integral.", 409);
+  }
+  if (!database.settings.allow_driver_claim) {
+    throw new AppError("Activa la toma directa de solicitudes por taxistas antes de ejecutar la prueba integral.", 409);
+  }
+
+  const password = `TaxiDemo-${randomBytes(6).toString("hex")}!`;
+  const passengerPasswordHash = hashPassword(password);
+  const expiry = new Date(Date.now() + 370 * 86_400_000).toISOString().slice(0, 10);
+  const startsAt = date();
+  const templates = [
+    { code: "turicato", short: "T", town: "Turicato", name: "Sitio Turicato Centro · PRUEBA", manager: "María Fernanda Reyes", lat: 19.05299, lng: -101.41863, destinations: ["Puruarán", "Tacámbaro", "Caramicuas", "Cahulote", "Bachilleres de Turicato"] },
+    { code: "puruaran", short: "P", town: "Puruarán", name: "Sitio Puruarán Plaza · PRUEBA", manager: "José Luis García", lat: 19.09750, lng: -101.52200, destinations: ["Turicato", "Tacámbaro", "Caramicuas", "Cahulote", "Bachilleres de Puruarán"] },
+    { code: "tacambaro", short: "M", town: "Tacámbaro", name: "Sitio Tacámbaro Centro · PRUEBA", manager: "Ana Isabel Morales", lat: 19.23540, lng: -101.45920, destinations: ["Puruarán", "Turicato", "Caramicuas", "Cahulote", "Bachilleres de Tacámbaro"] },
+  ];
+  const names = ["Carlos Mendoza", "Laura Hernández", "Miguel Sánchez", "Patricia López", "Roberto Cruz", "Daniela Ramírez", "Arturo Torres", "Sofía Martínez", "Javier Flores", "Elena Vargas"];
+  const passengers = ["Alejandra Soto", "Bruno Álvarez", "Carolina Núñez", "David Pérez", "Estela Ríos", "Francisco Chávez", "Gabriela Ortiz", "Héctor Jiménez", "Irene Castillo", "Jorge Méndez", "Karen Aguilar", "Luis Vázquez", "Mariana Peña", "Nicolás Romero", "Olivia Bautista", "Pedro Carrillo", "Raquel Díaz", "Samuel Ochoa", "Teresa Molina", "Ulises Herrera"];
+  const operations = [];
+
+  for (let siteIndex = 0; siteIndex < templates.length; siteIndex++) {
+    const template = templates[siteIndex];
+    const union = performAction(database, administrator, "createOrganization", {
+      kind: "union", name: `Sindicato ${template.town} · PRUEBA`, color: ["#134738", "#537dd5", "#9556a1"][siteIndex],
+      contactName: template.manager, phone: `45910100${String(siteIndex).padStart(2, "0")}`,
+    });
+    const group = performAction(database, administrator, "createOrganization", {
+      kind: "group", name: `Base ${template.town} · PRUEBA`, parentId: union.id, color: "#438e80",
+    });
+    const siteResult = performAction(database, administrator, "createSite", {
+      name: template.name, town: template.town, email: `sitio.${template.code}@${DEMO_DOMAIN}`,
+      phone: `45920200${String(siteIndex).padStart(2, "0")}`, unionId: union.id, password,
+      sitePhotoKey: demoPhotoKey("site"), managerName: template.manager,
+      legalName: `Organización de taxis de ${template.town} - prueba interna`, legalRepresentative: template.manager,
+      representativeRole: "Responsable de base", legalAddress: `Plaza principal de ${template.town}, Michoacán`,
+      address: `Plaza principal de ${template.town}`, etaMinutes: 8 + siteIndex * 3,
+      dispatchStart: "00:00", dispatchEnd: "23:59", baseLat: template.lat, baseLng: template.lng,
+    });
+    const site = database.sites.find((item) => item.id === siteResult.id);
+    site.demo_profile = true;
+    const siteAccount = database.users.find((item) => item.role === "site" && item.site_id === site.id);
+    siteAccount.demo_profile = true;
+    performAction(database, siteAccount, "acceptLegal", { privacyAccepted: true, termsAccepted: true });
+
+    const tariffs = [];
+    for (let routeIndex = 0; routeIndex < template.destinations.length; routeIndex++) {
+      performAction(database, administrator, "saveTariff", {
+        town: template.town, origin: "Recogida de prueba fuera de la base", destination: template.destinations[routeIndex],
+        serviceFare: 55 + routeIndex * 10 + siteIndex * 5, pickupFee: 12 + siteIndex * 3,
+        etaMinutes: 9 + routeIndex, arrivalPoint: `Plaza principal de ${template.destinations[routeIndex]}`,
+        priceMode: "person", recommended: true, studentDiscount: database.settings.student_discount,
+      });
+      const tariff = database.tariffs.find((item) => samePlace(item.town, template.town) &&
+        samePlace(item.origin, "Recogida de prueba fuera de la base") && samePlace(item.destination, template.destinations[routeIndex]));
+      tariff.demo_profile = true;
+      tariffs.push(tariff);
+    }
+
+    const drivers = [];
+    for (let driverIndex = 0; driverIndex < 10; driverIndex++) {
+      const fullName = `${names[driverIndex]} ${template.town}`;
+      const driverResult = performAction(database, siteAccount, "createDriver", {
+        name: fullName, email: `taxi.${template.code}.${String(driverIndex + 1).padStart(2, "0")}@${DEMO_DOMAIN}`,
+        phone: `459${siteIndex + 4}00${String(driverIndex + 1).padStart(4, "0")}`,
+        unionId: union.id, groupId: group.id, siteId: site.id, unitNumber: `D${template.short}${String(driverIndex + 1).padStart(2, "0")}`,
+        plate: `${template.short}DM-${String(driverIndex + 101).padStart(3, "0")}-M`, vehicle: `${["Nissan March", "Nissan Versa", "Chevrolet Aveo", "Volkswagen Vento"][driverIndex % 4]} ${2020 + driverIndex % 5}`,
+        vehicleColor: ["Blanco", "Rojo", "Azul", "Plata"][driverIndex % 4], zone: `${template.town} y comunidades`, password,
+        licenseNumber: `LIC-DEMO-${template.short}-${driverIndex + 1}`, permitNumber: `CON-DEMO-${template.short}-${driverIndex + 1}`,
+        insurancePolicy: `POL-DEMO-${template.short}-${driverIndex + 1}`, insuranceExpiration: expiry,
+        driverPhotoKey: demoPhotoKey("driver"), vehiclePhotoKey: demoPhotoKey("vehicle"), driverConsent: true,
+        shiftStart: "06:00", shiftEnd: "22:00",
+      });
+      const driver = database.drivers.find((item) => item.id === driverResult.id);
+      driver.demo_profile = true;
+      const driverAccount = database.users.find((item) => item.email === driver.email);
+      driverAccount.demo_profile = true;
+      performAction(database, driverAccount, "acceptLegal", { privacyAccepted: true, termsAccepted: true });
+      performAction(database, driverIndex % 2 ? siteAccount : driverAccount, "setDriverStatus", { driverId: driver.id, status: "available" });
+      drivers.push({ profile: driver, account: driverAccount });
+    }
+    operations.push({ template, site, account: siteAccount, drivers, tariffs });
+  }
+
+  const passengerAccounts = passengers.map((name, index) => {
+    const account = {
+      id: randomUUID(), name, email: `pasajero.${String(index + 1).padStart(2, "0")}@${DEMO_DOMAIN}`,
+      phone: `4598${String(index + 1).padStart(6, "0")}`, role: "passenger", password_hash: passengerPasswordHash,
+      profile_photo_key: demoPhotoKey("passenger"), senior_discount_eligible: index === 5 || index === 18,
+      active: true, privacy_accepted_at: date(), terms_accepted_at: date(), legal_version: LEGAL_VERSION,
+      demo_profile: true, created_at: date(),
+    };
+    database.users.push(account);
+    record(database, account.email, "passenger_registered", `Se registró la persona pasajera de prueba ${name}.`, account.id);
+    return account;
+  });
+
+  function requestRide(passengerIndex, siteIndex, routeIndex, extra = {}) {
+    const operation = operations[siteIndex];
+    const payload = {
+      siteId: operation.site.id, tariffId: routeIndex === null ? "" : operation.tariffs[routeIndex].id,
+      pickupLabel: `${["Farmacia del centro", "Tienda de la esquina", "Frente a Bachilleres", "Puente de acceso", "Mercado municipal"][passengerIndex % 5]} · ${operation.template.town}`,
+      pickupLat: operation.template.lat + .008 + passengerIndex * .00012,
+      pickupLng: operation.template.lng - .008 - passengerIndex * .00008,
+      adultPassengers: 1, childPassengers: 0, safetyAccepted: true, ...extra,
+    };
+    const result = performAction(database, passengerAccounts[passengerIndex], "createRide", payload);
+    const ride = database.rides.find((item) => item.id === result.id);
+    ride.demo_profile = true;
+    return ride;
+  }
+
+  function assign(ride, siteIndex, driverIndex, mode = "site", extra = {}) {
+    const operation = operations[siteIndex];
+    const driver = operation.drivers[driverIndex];
+    performAction(database, mode === "driver" ? driver.account : operation.account, "acceptRide", {
+      rideId: ride.id, driverId: driver.profile.id, etaMinutes: 6 + siteIndex + driverIndex, ...extra,
+    });
+    return driver;
+  }
+
+  function complete(ride, driver, passengerIndex, rating = 5) {
+    performAction(database, driver.account, "advanceRide", { rideId: ride.id });
+    performAction(database, driver.account, "advanceRide", { rideId: ride.id, securityCode: ride.security_code });
+    performAction(database, driver.account, "advanceRide", { rideId: ride.id });
+    performAction(database, passengerAccounts[passengerIndex], "rateRide", { rideId: ride.id, rating });
+  }
+
+  const fullParent = requestRide(0, 0, 0, { adultPassengers: 3 });
+  const fullDriver = assign(fullParent, 0, 0);
+  performAction(database, fullDriver.account, "advanceRide", { rideId: fullParent.id });
+  performAction(database, fullDriver.account, "advanceRide", { rideId: fullParent.id, securityCode: fullParent.security_code });
+  const fullShared = requestRide(1, 0, 0, { shareRideId: fullParent.id });
+  assign(fullShared, 0, 0, "driver", { passingBy: true });
+
+  const partialParent = requestRide(2, 1, 0, { adultPassengers: 2 });
+  assign(partialParent, 1, 0);
+  const partialShared = requestRide(3, 1, 0, { shareRideId: partialParent.id });
+  assign(partialShared, 1, 0, "driver", { passingBy: true });
+
+  expectDemoRejection(database, administrator, "una unidad con cuatro pasajeros no admite lugares adicionales", () => {
+    requestRide(19, 0, 0, { adultPassengers: 2, shareRideId: fullParent.id });
+  });
+
+  const siteControlled = requestRide(4, 2, 0);
+  expectDemoRejection(database, administrator, "un sitio no puede asignar servicios de otra base", () => {
+    performAction(database, operations[0].account, "acceptRide", { rideId: siteControlled.id, driverId: operations[0].drivers[1].profile.id });
+  });
+  const controlledDriver = assign(siteControlled, 2, 0);
+  complete(siteControlled, controlledDriver, 4, 4);
+  const resolvedSafety = performAction(database, passengerAccounts[4], "createReport", {
+    rideId: siteControlled.id, category: "speeding", details: "Durante la prueba se reportó una velocidad superior a la esperada.",
+  });
+  performAction(database, operations[2].account, "resolveReport", {
+    reportId: resolvedSafety.id, status: "resolved", resolution: "El sitio entrevistó al conductor y dejó constancia de la orientación preventiva.",
+  });
+
+  const directCompleted = requestRide(5, 0, 1, { seniorPassengers: 1 });
+  complete(directCompleted, assign(directCompleted, 0, 1, "driver"), 5);
+  const assignedOnly = requestRide(6, 1, 1);
+  assign(assignedOnly, 1, 1);
+  requestRide(7, 2, 1);
+
+  const specialConfirmed = requestRide(8, 0, null, { specialDestination: "Rancho El Mirador" });
+  expectDemoRejection(database, administrator, "una salida especial no se asigna antes de validar destino y precio", () => {
+    performAction(database, operations[0].drivers[2].account, "acceptRide", { rideId: specialConfirmed.id });
+  });
+  performAction(database, operations[0].account, "confirmSpecialFare", {
+    rideId: specialConfirmed.id, perPerson: Math.min(database.settings.special_max_per_person, 85),
+  });
+  assign(specialConfirmed, 0, 2);
+  requestRide(9, 1, null, { specialDestination: "Parcela Las Palmas" });
+  requestRide(10, 2, 2, { scheduledAt: new Date(Date.now() + 3 * 60 * 60_000).toISOString() });
+
+  const cancelled = requestRide(11, 0, 2);
+  assign(cancelled, 0, 3, "driver");
+  performAction(database, passengerAccounts[11], "cancelRide", { rideId: cancelled.id });
+
+  const withChild = requestRide(12, 1, 2, { childPassengers: 1, childSafetyAccepted: true });
+  const childDriver = assign(withChild, 1, 2);
+  performAction(database, passengerAccounts[12], "updateRideLocation", {
+    rideId: withChild.id, pickupLat: withChild.pickup_lat + .001, pickupLng: withChild.pickup_lng - .001,
+    pickupLabel: "Nueva fachada confirmada manualmente · Puruarán",
+  });
+  complete(withChild, childDriver, 12);
+
+  const arrived = requestRide(13, 2, 3);
+  const arrivedDriver = assign(arrived, 2, 1);
+  performAction(database, arrivedDriver.account, "advanceRide", { rideId: arrived.id });
+  const inProgress = requestRide(14, 0, 3);
+  const progressDriver = assign(inProgress, 0, 4);
+  performAction(database, progressDriver.account, "advanceRide", { rideId: inProgress.id });
+  performAction(database, progressDriver.account, "advanceRide", { rideId: inProgress.id, securityCode: inProgress.security_code });
+  const passing = requestRide(15, 1, 3);
+  assign(passing, 1, 3, "driver", { passingBy: true });
+  requestRide(16, 2, 4);
+
+  const openReportRide = requestRide(17, 0, 4);
+  complete(openReportRide, assign(openReportRide, 0, 5, "driver"), 17, 2);
+  performAction(database, passengerAccounts[17], "createReport", {
+    rideId: openReportRide.id, category: "dangerous_overtake", details: "Prueba de reporte: se observó un rebase riesgoso en una curva.",
+  });
+
+  const studentRide = requestRide(18, 1, 4, { studentPassengers: 1 });
+  complete(studentRide, assign(studentRide, 1, 4), 18);
+  const suggestion = performAction(database, passengerAccounts[18], "createReport", {
+    rideId: studentRide.id, category: "suggestion", details: "Prueba de calidad: mejorar el aviso de llegada y confirmar la fachada.",
+  });
+  performAction(database, operations[1].account, "resolveReport", {
+    reportId: suggestion.id, status: "resolved", resolution: "El sitio registró la sugerencia y actualizó su protocolo interno de recogida.",
+  });
+
+  requestRide(19, 2, 2, { scheduledAt: new Date(Date.now() + 5 * 60 * 60_000).toISOString() });
+  const disciplinaryDriver = operations[2].drivers[9].profile;
+  performAction(database, operations[2].account, "setDriverStatus", { driverId: disciplinaryDriver.id, status: "offline" });
+  performAction(database, operations[2].account, "toggleDriver", { id: disciplinaryDriver.id });
+  performAction(database, operations[2].account, "toggleDriver", { id: disciplinaryDriver.id });
+  performAction(database, operations[2].account, "setDriverStatus", { driverId: disciplinaryDriver.id, status: "available" });
+
+  const demoRides = database.rides.filter((ride) => ride.demo_profile);
+  const summary = {
+    id: randomUUID(), created_at: startsAt, created_by: administrator.email,
+    sites: 3, drivers: 30, passengers: 20, rides: demoRides.length, reports: database.reports.filter((item) =>
+      demoRides.some((ride) => ride.id === item.ride_id)).length,
+    shared_rides: demoRides.filter((ride) => ride.shared_service).length,
+    completed_rides: demoRides.filter((ride) => ride.status === "completed").length,
+    pending_rides: demoRides.filter((ride) => ride.status === "requested").length,
+    security_checks: 3,
+    site_accounts: operations.map((operation) => operation.account.email),
+    driver_account_example: operations[0].drivers[0].account.email,
+    passenger_account_example: passengerAccounts[0].email,
+  };
+  if (summary.rides !== 20 || occupiedSeats(database, fullDriver.profile.id) !== 4 ||
+      occupiedSeats(database, operations[1].drivers[0].profile.id) !== 3) {
+    throw new AppError("La simulación no pasó sus comprobaciones de capacidad y conteo; no se guardaron cambios.", 500);
+  }
+  database.demo_run = summary;
+  record(database, administrator.email, "demo_completed", `Prueba integral guardada: ${summary.sites} sitios, ${summary.drivers} taxistas, ${summary.passengers} usuarios, ${summary.rides} servicios y ${summary.security_checks} validaciones de seguridad.`, summary.id);
+  return { summary, password };
+}
+
+function resetOperationalDatabase(database, administrator, payload) {
+  const phrase = value(payload.confirmationPhrase, 80);
+  if (phrase !== MASTER_RESET_PHRASE) throw new AppError(`Escribe exactamente la frase ${MASTER_RESET_PHRASE}.`, 400);
+  if (email(payload.adminEmail) !== administrator.email) throw new AppError("El correo de confirmación no coincide con la administración maestra.", 403);
+  if (!verifyPassword(String(payload.currentPassword || ""), administrator.password_hash)) {
+    throw new AppError("La contraseña de la administración maestra es incorrecta.", 403);
+  }
+  if (payload.confirmDeleteOperations !== true || payload.confirmDeleteHistory !== true || payload.confirmIrreversible !== true) {
+    throw new AppError("Debes confirmar las tres advertencias antes de reiniciar la central.", 400);
+  }
+  const photos = new Set();
+  for (const site of database.sites) if (!site.demo_profile && site.photo_key) photos.add(site.photo_key);
+  for (const driver of database.drivers) if (!driver.demo_profile) {
+    if (driver.driver_photo_key) photos.add(driver.driver_photo_key);
+    if (driver.vehicle_photo_key) photos.add(driver.vehicle_photo_key);
+  }
+  for (const user of database.users) if (!user.demo_profile && user.profile_photo_key) photos.add(user.profile_photo_key);
+  for (const ride of database.rides) if (!ride.demo_profile && ride.pickup_photo_key) photos.add(ride.pickup_photo_key);
+  const removed = {
+    sites: database.sites.length, drivers: database.drivers.length,
+    passengers: database.users.filter((item) => item.role === "passenger").length,
+    rides: database.rides.length, reports: database.reports.length, activity: database.activity.length,
+  };
+  const preservedSettings = structuredClone(database.settings);
+  const preservedAdministrator = structuredClone(administrator);
+  Object.assign(database, emptyDatabase(), { users: [preservedAdministrator], settings: preservedSettings, demo_run: null });
+  record(database, administrator.email, "master_reset", `Reinicio maestro confirmado: se eliminaron ${removed.sites} sitios, ${removed.drivers} taxistas, ${removed.passengers} pasajeros, ${removed.rides} viajes y ${removed.reports} reportes. Se conservaron la cuenta maestra y la configuración.`, administrator.id);
+  return { removed, _photosToDelete: [...photos] };
+}
+
 function performAction(database, account, action, payload) {
   const currentAccount = database.users.find((item) => item.id === account.id);
   if (!currentAccount?.active) throw new AppError("Tu sesión ya no está disponible.", 401);
@@ -866,6 +1190,16 @@ function performAction(database, account, action, payload) {
     currentAccount.password_hash = hashPassword(next);
     record(database, currentAccount.email, "password_changed", "Se actualizó la contraseña de la cuenta.", currentAccount.id);
     return;
+  }
+
+  if (action === "seedDemoScenario") {
+    requireAdmin(currentAccount);
+    return seedDemoScenario(database, currentAccount);
+  }
+
+  if (action === "masterReset") {
+    requireAdmin(currentAccount);
+    return resetOperationalDatabase(database, currentAccount, payload);
   }
 
   if (["site", "driver"].includes(currentAccount.role) &&
@@ -1092,7 +1426,7 @@ function performAction(database, account, action, payload) {
   }
 
   if (action === "createDriver") {
-    requireAdmin(currentAccount);
+    if (!["admin", "site"].includes(currentAccount.role)) throw new AppError("Solo administración y el sitio responsable pueden registrar taxistas.", 403);
     const name = value(payload.name, 90);
     const accountEmail = email(payload.email);
     const phone = value(payload.phone, 20);
@@ -1124,6 +1458,9 @@ function performAction(database, account, action, payload) {
     }
     const assignedSite = database.sites.find((site) => site.id === siteId && site.active);
     if (!assignedSite) throw new AppError("Selecciona un sitio autorizado y activo.");
+    if (currentAccount.role === "site" && assignedSite.id !== currentAccount.site_id) {
+      throw new AppError("Un sitio solo puede registrar taxistas para su propia base.", 403);
+    }
     if (assignedSite.union_id && assignedSite.union_id !== unionId) throw new AppError("El sitio elegido pertenece a otro sindicato.");
     const driverPhotoKey = value(payload.driverPhotoKey, 80);
     const vehiclePhotoKey = value(payload.vehiclePhotoKey, 80);
@@ -1177,10 +1514,10 @@ function performAction(database, account, action, payload) {
   }
 
   if (action === "resetDriverPassword") {
-    requireAdmin(currentAccount);
     const driver = database.drivers.find((item) => item.id === value(payload.id, 64));
     const password = String(payload.password || "");
     if (!driver) throw new AppError("No encontramos a ese taxista.", 404);
+    requireSiteOrAdmin(database, currentAccount, driver.site_id);
     if (password.length < 8) throw new AppError("La contraseña debe tener al menos 8 caracteres.");
     const user = database.users.find((item) => item.email === driver.email);
     if (!user) throw new AppError("La cuenta del taxista ya no existe.", 404);
@@ -1190,12 +1527,15 @@ function performAction(database, account, action, payload) {
   }
 
   if (action === "updateDriverDocuments") {
-    requireAdmin(currentAccount);
     const driver = database.drivers.find((item) => item.id === value(payload.id, 64));
     if (!driver) throw new AppError("No encontramos a ese taxista.", 404);
+    requireSiteOrAdmin(database, currentAccount, driver.site_id);
     const siteId = value(payload.siteId || driver.site_id, 64);
     const site = database.sites.find((item) => item.id === siteId && item.active);
     if (!site) throw new AppError("Selecciona un sitio activo para la unidad.");
+    if (currentAccount.role === "site" && site.id !== currentAccount.site_id) {
+      throw new AppError("No puedes trasladar una unidad a otro sitio.", 403);
+    }
     if (site.union_id && site.union_id !== driver.union_id) throw new AppError("Ese sitio no pertenece al sindicato del conductor.");
     const licenseNumber = value(payload.licenseNumber || driver.license_number, 40);
     const permitNumber = value(payload.permitNumber || driver.permit_number, 40);
@@ -1689,8 +2029,9 @@ export default async function handler(request) {
 
     if (action === "uploadPhoto") return await uploadPhoto(database, account, payload);
 
-    const photoReferences = action === "createRide" ? [payload.pickupPhotoKey] : action === "saveProfile" ?
-      [payload.profilePhotoKey, payload.driverPhotoKey, payload.vehiclePhotoKey, payload.sitePhotoKey] : [];
+    const photoReferences = action === "createRide" ? [payload.pickupPhotoKey] :
+      ["createDriver", "updateDriverDocuments"].includes(action) ? [payload.driverPhotoKey, payload.vehiclePhotoKey] :
+      action === "saveProfile" ? [payload.profilePhotoKey, payload.driverPhotoKey, payload.vehiclePhotoKey, payload.sitePhotoKey] : [];
     if (account.role !== "admin") {
       for (const reference of photoReferences.filter(Boolean)) {
         const uploaded = await mediaStore().getWithMetadata(value(reference, 80), { type: "arrayBuffer", consistency: "strong" });

@@ -1,5 +1,6 @@
 (()=>{
   "use strict";
+  try{document.documentElement.dataset.theme=localStorage.getItem("taxi-turicato-theme")||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(error){document.documentElement.dataset.theme="light"}
   const query=new URLSearchParams(window.location.search);
   const requestedSite=query.get("site");
   const endpoint="/api/taxi?public=legal"+(requestedSite?"&site="+encodeURIComponent(requestedSite):"");
