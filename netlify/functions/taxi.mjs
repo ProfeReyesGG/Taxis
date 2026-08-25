@@ -1,17 +1,24 @@
 import { getStore } from "@netlify/blobs";
-import { createHash, createHmac, randomBytes, randomInt, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import {
+  createCipheriv, createECDH, createHash, createHmac, createPrivateKey, hkdfSync, randomBytes,
+  randomInt, randomUUID, scryptSync, sign, timingSafeEqual,
+} from "node:crypto";
 
 const STORE_NAME = "taxi-turicato";
 const MEDIA_STORE_NAME = "taxi-turicato-fotografias";
 const DATABASE_KEY = "central-operativa-v1";
 const COOKIE_NAME = "taxi_turicato";
 const SESSION_SECONDS = 60 * 60 * 24 * 7;
-const LEGAL_VERSION = "2026-08-24";
+const LEGAL_VERSION = "2026-08-25";
 const MAX_IMAGE_BYTES = 650_000;
 const MASTER_RESET_PHRASE = "REINICIAR TAXI TURICATO";
 const DEMO_DOMAIN = "demo.taxituricato.mx";
 const ACTIVE_RIDES = new Set(["requested", "accepted", "arrived", "in_progress"]);
 const COLORS = new Set(["#134738", "#537dd5", "#d58237", "#9556a1", "#bd4f5a", "#438e80"]);
+const DRIVER_REPORT_CATEGORIES = new Set([
+  "repeated_cancellation", "no_show", "incorrect_location", "mistreatment", "payment_refusal",
+  "vehicle_damage", "unsafe_conduct", "pickup_delay", "other",
+]);
 
 const DEFAULT_SETTINGS = {
   base_fare: 35,
@@ -160,6 +167,9 @@ function emptyDatabase() {
     drivers: [],
     tariffs: [],
     reports: [],
+    passenger_reports: [],
+    notifications: [],
+    push_subscriptions: [],
     rides: [],
     activity: [],
     login_attempts: {},
@@ -169,7 +179,8 @@ function emptyDatabase() {
 
 function normalizeDatabase(database) {
   const safe = database && typeof database === "object" ? database : emptyDatabase();
-  for (const key of ["users", "unions", "groups", "sites", "drivers", "tariffs", "rides", "reports", "activity"]) {
+  for (const key of ["users", "unions", "groups", "sites", "drivers", "tariffs", "rides", "reports",
+    "passenger_reports", "notifications", "push_subscriptions", "activity"]) {
     if (!Array.isArray(safe[key])) safe[key] = [];
   }
   if (!safe.login_attempts || typeof safe.login_attempts !== "object") safe.login_attempts = {};
@@ -216,6 +227,137 @@ function record(database, actor, action, description, relatedId = null) {
     related_id: relatedId,
     created_at: date(),
   });
+}
+
+function adminEmails(database) {
+  return database.users.filter((account) => account.active && account.role === "admin").map((account) => account.email);
+}
+
+function siteEmail(database, siteId) {
+  return database.users.find((account) => account.active && account.role === "site" && account.site_id === siteId)?.email || "";
+}
+
+function notify(database, recipients, type, title, body, options = {}) {
+  const active = new Set(database.users.filter((account) => account.active).map((account) => account.email));
+  for (const recipient of new Set(recipients.map((item) => email(item)).filter((item) => item && active.has(item)))) {
+    database.notifications.unshift({
+      id: randomUUID(), recipient_email: recipient, type: value(type, 45), title: value(title, 90),
+      body: value(body, 230), ride_id: options.rideId || null, site_id: options.siteId || null,
+      report_id: options.reportId || null, target_page: value(options.page, 35),
+      created_at: date(), read_at: null,
+    });
+  }
+  if (database.notifications.length > 12_000) {
+    const counts = new Map();
+    database.notifications = database.notifications.filter((item) => {
+      const amount = counts.get(item.recipient_email) || 0;
+      counts.set(item.recipient_email, amount + 1);
+      return amount < 140;
+    }).slice(0, 12_000);
+  }
+}
+
+function vapidKeys(secret) {
+  const key = createECDH("prime256v1");
+  key.setPrivateKey(createHash("sha256").update(`taxi-turicato-web-push:${secret}`).digest());
+  const publicKey = key.getPublicKey();
+  return { privateKey: key.getPrivateKey(), publicKey, publicText: publicKey.toString("base64url") };
+}
+
+function pushJwt(endpoint, configuration, keys) {
+  const audience = new URL(endpoint).origin;
+  const header = Buffer.from(JSON.stringify({ typ: "JWT", alg: "ES256" })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({
+    aud: audience,
+    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
+    sub: `mailto:${configuration.administrator}`,
+  })).toString("base64url");
+  const privateKey = createPrivateKey({
+    key: {
+      kty: "EC", crv: "P-256", d: keys.privateKey.toString("base64url"),
+      x: keys.publicKey.subarray(1, 33).toString("base64url"),
+      y: keys.publicKey.subarray(33, 65).toString("base64url"),
+    },
+    format: "jwk",
+  });
+  const signature = sign("sha256", Buffer.from(`${header}.${payload}`), { key: privateKey, dsaEncoding: "ieee-p1363" });
+  return `${header}.${payload}.${signature.toString("base64url")}`;
+}
+
+function encryptedPushMessage(subscription, message) {
+  const receiver = Buffer.from(subscription.p256dh, "base64url");
+  const auth = Buffer.from(subscription.auth, "base64url");
+  const ephemeral = createECDH("prime256v1");
+  ephemeral.generateKeys();
+  const sender = ephemeral.getPublicKey();
+  const shared = ephemeral.computeSecret(receiver);
+  const info = Buffer.concat([Buffer.from("WebPush: info\0"), receiver, sender]);
+  const pseudorandom = Buffer.from(hkdfSync("sha256", shared, auth, info, 32));
+  const salt = randomBytes(16);
+  const contentKey = Buffer.from(hkdfSync("sha256", pseudorandom, salt, Buffer.from("Content-Encoding: aes128gcm\0"), 16));
+  const nonce = Buffer.from(hkdfSync("sha256", pseudorandom, salt, Buffer.from("Content-Encoding: nonce\0"), 12));
+  const cipher = createCipheriv("aes-128-gcm", contentKey, nonce);
+  const plaintext = Buffer.concat([Buffer.from(JSON.stringify(message)), Buffer.from([2])]);
+  const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final(), cipher.getAuthTag()]);
+  const recordSize = Buffer.alloc(4);
+  recordSize.writeUInt32BE(4096);
+  return Buffer.concat([salt, recordSize, Buffer.from([sender.length]), sender, encrypted]);
+}
+
+async function deliverPushNotifications(database, added, configuration) {
+  if (!added.length || !database.push_subscriptions.length) return;
+  const keys = vapidKeys(configuration.secret);
+  const latest = new Map();
+  for (const item of added) if (!latest.has(item.recipient_email)) latest.set(item.recipient_email, item);
+  const tasks = database.push_subscriptions.filter((subscription) => latest.has(subscription.account_email)).slice(0, 60)
+    .map(async (subscription) => {
+      const item = latest.get(subscription.account_email);
+      const body = encryptedPushMessage(subscription, {
+        title: item.title, body: item.body, notificationId: item.id,
+        targetPage: item.target_page || "notifications", tag: `taxi-${item.ride_id || item.id}`,
+      });
+      const result = await fetch(subscription.endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `vapid t=${pushJwt(subscription.endpoint, configuration, keys)}, k=${keys.publicText}`,
+          "Content-Encoding": "aes128gcm",
+          "Content-Type": "application/octet-stream",
+          TTL: "86400",
+          Urgency: "high",
+        },
+        body,
+        signal: AbortSignal.timeout(7000),
+      });
+      if ([404, 410].includes(result.status)) return subscription.endpoint;
+      if (!result.ok) console.warn(`Web Push respondió ${result.status} para una suscripción activa.`);
+      return null;
+    });
+  const completed = await Promise.allSettled(tasks);
+  const expired = new Set(completed.filter((item) => item.status === "fulfilled" && item.value).map((item) => item.value));
+  if (expired.size) {
+    await transaction((current) => {
+      current.push_subscriptions = current.push_subscriptions.filter((item) => !expired.has(item.endpoint));
+    });
+  }
+}
+
+function passengerMetrics(database, passengerEmail, siteId = "") {
+  const rides = database.rides.filter((ride) => ride.passenger_email === passengerEmail && (!siteId || ride.site_id === siteId));
+  const reports = database.passenger_reports.filter((report) => report.passenger_email === passengerEmail &&
+    (!siteId || report.site_id === siteId));
+  const cancellations = rides.filter((ride) => ride.status === "cancelled" &&
+    (ride.cancelled_by_role === "passenger" || (ride.route_events || []).some((event) =>
+      event.action === "cancelled" && event.actor === passengerEmail))).length;
+  const ratings = reports.filter((report) => report.status === "confirmed" && report.site_rating >= 1)
+    .map((report) => report.site_rating);
+  return {
+    services: rides.length,
+    passenger_cancellations: cancellations,
+    open_reports: reports.filter((report) => ["open", "reviewing"].includes(report.status)).length,
+    confirmed_reports: reports.filter((report) => report.status === "confirmed").length,
+    rating_count: ratings.length,
+    rating_average: ratings.length ? Math.round(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length * 10) / 10 : null,
+  };
 }
 
 function demoPhotoKey(kind) {
@@ -421,6 +563,7 @@ function visibleState(database, account) {
   let tariffs = [];
   let activity = [];
   let reports = [];
+  let passengerReports = [];
   let passengers = [];
   let sharedOpportunities = [];
 
@@ -431,7 +574,10 @@ function visibleState(database, account) {
     tariffs = database.tariffs;
     activity = database.activity.slice(0, 60);
     reports = database.reports;
-    passengers = database.users.filter((item) => item.role === "passenger").map(accountWithoutSecrets);
+    passengerReports = database.passenger_reports;
+    passengers = database.users.filter((item) => item.role === "passenger").map((person) => ({
+      ...accountWithoutSecrets(person), passenger_metrics: passengerMetrics(database, person.email),
+    }));
   } else if (account.role === "site") {
     drivers = database.drivers.filter((driver) => driver.site_id === ownSite.id).map((driver) => enrichedDriver(database, driver, true));
     rides = database.rides.filter((ride) => ride.site_id === ownSite.id).map((ride) => {
@@ -452,8 +598,11 @@ function visibleState(database, account) {
     const related = new Set([ownSite.id, ...drivers.map((driver) => driver.id), ...rides.map((ride) => ride.id)]);
     activity = database.activity.filter((item) => item.actor_email === account.email || related.has(item.related_id)).slice(0, 30);
     reports = database.reports.filter((report) => report.site_id === ownSite.id);
+    passengerReports = database.passenger_reports.filter((report) => report.site_id === ownSite.id);
     const ownPassengerEmails = new Set(rides.map((ride) => ride.passenger_email));
-    passengers = database.users.filter((item) => item.role === "passenger" && ownPassengerEmails.has(item.email)).map(accountWithoutSecrets);
+    passengers = database.users.filter((item) => item.role === "passenger" && ownPassengerEmails.has(item.email)).map((person) => ({
+      ...accountWithoutSecrets(person), passenger_metrics: passengerMetrics(database, person.email, ownSite.id),
+    }));
   } else if (account.role === "driver") {
     drivers = [enrichedDriver(database, ownDriver, true)];
     rides = database.rides
@@ -487,6 +636,7 @@ function visibleState(database, account) {
     sites = database.sites.filter((site) => site.id === ownDriver.site_id).map(publicSite);
     tariffs = database.tariffs.filter((tariff) => tariff.active && sites.some((site) => samePlace(site.town, tariff.town)));
     reports = database.reports.filter((report) => report.driver_id === ownDriver.id).map(({ passenger_name: _name, passenger_email: _email, details: _details, ...safe }) => safe);
+    passengerReports = database.passenger_reports.filter((report) => report.driver_id === ownDriver.id);
   } else {
     drivers = database.drivers
       .filter((driver) => driver.active && driver.verified && driver.status === "available" && driverOrganization(database, driver).operational)
@@ -543,6 +693,15 @@ function visibleState(database, account) {
     passengers,
     shared_opportunities: sharedOpportunities,
     reports,
+    passenger_reports: passengerReports,
+    notifications: database.notifications.filter((item) => item.recipient_email === account.email).slice(0, 100)
+      .map(({ recipient_email: _recipient, ...safe }) => safe),
+    unread_notifications: database.notifications.filter((item) => item.recipient_email === account.email && !item.read_at).length,
+    push: {
+      available: true,
+      public_key: vapidKeys(process.env.TAXI_SESSION_SECRET).publicText,
+      subscriptions: database.push_subscriptions.filter((item) => item.account_email === account.email).length,
+    },
     activity,
     demo_run: account.role === "admin" ? database.demo_run || null : null,
     audit_log: account.role === "admin" ? database.activity : [],
@@ -1025,8 +1184,16 @@ function seedDemoScenario(database, administrator) {
   requestRide(10, 2, 2, { scheduledAt: new Date(Date.now() + 3 * 60 * 60_000).toISOString() });
 
   const cancelled = requestRide(11, 0, 2);
-  assign(cancelled, 0, 3, "driver");
+  const cancelledDriver = assign(cancelled, 0, 3, "driver");
   performAction(database, passengerAccounts[11], "cancelRide", { rideId: cancelled.id });
+  const cancellationReport = performAction(database, cancelledDriver.account, "createPassengerReport", {
+    rideId: cancelled.id, category: "repeated_cancellation",
+    details: "Prueba privada: la persona canceló después de que la unidad ya había sido asignada y estaba en camino.",
+  });
+  performAction(database, operations[0].account, "resolvePassengerReport", {
+    reportId: cancellationReport.id, status: "confirmed", siteRating: 2,
+    resolution: "La base revisó el historial y registró una calificación interna de dos estrellas sin bloquear automáticamente a la persona.",
+  });
 
   const withChild = requestRide(12, 1, 2, { childPassengers: 1, childSafetyAccepted: true });
   const childDriver = assign(withChild, 1, 2);
@@ -1061,6 +1228,10 @@ function seedDemoScenario(database, administrator) {
   performAction(database, operations[1].account, "resolveReport", {
     reportId: suggestion.id, status: "resolved", resolution: "El sitio registró la sugerencia y actualizó su protocolo interno de recogida.",
   });
+  performAction(database, operations[1].drivers[4].account, "createPassengerReport", {
+    rideId: studentRide.id, category: "pickup_delay",
+    details: "Prueba privada: la recogida se retrasó y la base debe revisar la referencia proporcionada por la persona pasajera.",
+  });
 
   requestRide(19, 2, 2, { scheduledAt: new Date(Date.now() + 5 * 60 * 60_000).toISOString() });
   const disciplinaryDriver = operations[2].drivers[9].profile;
@@ -1074,6 +1245,8 @@ function seedDemoScenario(database, administrator) {
     id: randomUUID(), created_at: startsAt, created_by: administrator.email,
     sites: 3, drivers: 30, passengers: 20, rides: demoRides.length, reports: database.reports.filter((item) =>
       demoRides.some((ride) => ride.id === item.ride_id)).length,
+    passenger_reports: database.passenger_reports.filter((item) => demoRides.some((ride) => ride.id === item.ride_id)).length,
+    notifications: database.notifications.length,
     shared_rides: demoRides.filter((ride) => ride.shared_service).length,
     completed_rides: demoRides.filter((ride) => ride.status === "completed").length,
     pending_rides: demoRides.filter((ride) => ride.status === "requested").length,
@@ -1112,7 +1285,9 @@ function resetOperationalDatabase(database, administrator, payload) {
   const removed = {
     sites: database.sites.length, drivers: database.drivers.length,
     passengers: database.users.filter((item) => item.role === "passenger").length,
-    rides: database.rides.length, reports: database.reports.length, activity: database.activity.length,
+    rides: database.rides.length, reports: database.reports.length,
+    passengerReports: database.passenger_reports.length, notifications: database.notifications.length,
+    pushSubscriptions: database.push_subscriptions.length, activity: database.activity.length,
   };
   const preservedSettings = structuredClone(database.settings);
   const preservedAdministrator = structuredClone(administrator);
@@ -1124,6 +1299,57 @@ function resetOperationalDatabase(database, administrator, payload) {
 function performAction(database, account, action, payload) {
   const currentAccount = database.users.find((item) => item.id === account.id);
   if (!currentAccount?.active) throw new AppError("Tu sesión ya no está disponible.", 401);
+
+  if (action === "markNotificationsRead") {
+    const id = value(payload.notificationId, 64);
+    if (id && !database.notifications.some((item) => item.id === id && item.recipient_email === currentAccount.email)) {
+      throw new AppError("Esa notificación no pertenece a tu cuenta.", 403);
+    }
+    let updated = 0;
+    for (const item of database.notifications) {
+      if (item.recipient_email === currentAccount.email && !item.read_at && (!id || item.id === id)) {
+        item.read_at = date();
+        updated++;
+      }
+    }
+    return { updated };
+  }
+
+  if (action === "subscribePush") {
+    const endpoint = value(payload.endpoint, 1200);
+    const p256dh = value(payload.p256dh, 140);
+    const auth = value(payload.auth, 60);
+    let parsed;
+    try { parsed = new URL(endpoint); } catch { throw new AppError("El dispositivo no proporcionó una suscripción de notificaciones válida."); }
+    if (parsed.protocol !== "https:" || Buffer.from(p256dh, "base64url").length !== 65 ||
+        Buffer.from(auth, "base64url").length !== 16 || Buffer.from(p256dh, "base64url")[0] !== 4) {
+      throw new AppError("La suscripción segura de notificaciones no es válida.");
+    }
+    let retainedForAccount = 0;
+    database.push_subscriptions = database.push_subscriptions.filter((item) => {
+      if (item.endpoint === endpoint) return false;
+      if (item.account_email !== currentAccount.email) return true;
+      retainedForAccount++;
+      return retainedForAccount <= 5;
+    });
+    database.push_subscriptions.unshift({
+      id: randomUUID(), endpoint, p256dh, auth, account_id: currentAccount.id,
+      account_email: currentAccount.email, created_at: date(),
+    });
+    record(database, currentAccount.email, "notifications_enabled", "Se activaron notificaciones protegidas en un dispositivo.", currentAccount.id);
+    return;
+  }
+
+  if (action === "unsubscribePush") {
+    const endpoint = value(payload.endpoint, 1200);
+    const previous = database.push_subscriptions.length;
+    database.push_subscriptions = database.push_subscriptions.filter((item) =>
+      !(item.account_email === currentAccount.email && (!endpoint || item.endpoint === endpoint)));
+    if (previous !== database.push_subscriptions.length) {
+      record(database, currentAccount.email, "notifications_disabled", "Se desactivaron notificaciones en un dispositivo.", currentAccount.id);
+    }
+    return;
+  }
 
   if (action === "saveProfile") {
     const name = value(payload.name, 90);
@@ -1685,6 +1911,16 @@ function performAction(database, account, action, payload) {
     routeEvent(ride, currentAccount.email, "requested", `Ubicación de recogida registrada de forma manual; sitio ${site.name}.${sharedParent ? " Se solicitó un lugar compartido." : ""}`);
     database.rides.unshift(ride);
     record(database, currentAccount.email, "ride_requested", `${site.name}: se solicitó ${ride.folio}, ${pickupLabel} → ${destinationLabel}.`, ride.id);
+    const availableDrivers = database.drivers.filter((driver) => driver.active && driver.verified && driver.site_id === site.id &&
+      (driver.status === "available" || (driver.status === "busy" && sharedParent?.driver_id === driver.id)))
+      .map((driver) => driver.email);
+    notify(database, [siteEmail(database, site.id), ...availableDrivers, ...adminEmails(database)], "ride_requested",
+      ride.scheduled_at ? "Nueva solicitud programada" : "Nueva solicitud de taxi",
+      `${ride.folio} · ${destinationLabel} · ${ride.passengers} ${ride.passengers === 1 ? "persona" : "personas"}.`,
+      { rideId: ride.id, siteId: site.id, page: "rides" });
+    notify(database, [currentAccount.email], "ride_requested_confirmation", "Solicitud recibida",
+      `${site.name} está buscando una unidad para llevarte a ${destinationLabel}.`,
+      { rideId: ride.id, siteId: site.id, page: "request" });
     return { id: ride.id, folio: ride.folio };
   }
 
@@ -1733,6 +1969,15 @@ function performAction(database, account, action, payload) {
     const mode = currentAccount.role === "driver" ? (payload.passingBy ? "tomó la solicitud por encontrarse de paso" : "tomó directamente la solicitud") : "asignó la unidad";
     routeEvent(ride, currentAccount.email, "assigned", `${mode}; unidad ${driver.unit_number}; llegada estimada en ${ride.eta_minutes} minutos.`);
     record(database, currentAccount.email, "ride_accepted", `${currentAccount.role === "driver" ? "El taxista" : "El sitio"} ${mode} ${driver.unit_number} a ${ride.folio}; llegada en ${ride.eta_minutes} min.`, ride.id);
+    notify(database, [ride.passenger_email], "ride_accepted", "Tu taxista aceptó el servicio",
+      `Taxi ${driver.unit_number} · ${driver.plate} · llega aproximadamente en ${ride.eta_minutes} minutos.`,
+      { rideId: ride.id, siteId: ride.site_id, page: "request" });
+    notify(database, [driver.email], "ride_assigned_driver", "Tienes un servicio asignado",
+      `${ride.folio} · ${ride.destination_label} · ${ride.passengers} ${ride.passengers === 1 ? "pasajero" : "pasajeros"}.`,
+      { rideId: ride.id, siteId: ride.site_id, page: "driver-dashboard" });
+    notify(database, [siteEmail(database, ride.site_id), ...adminEmails(database)], "ride_assigned_site", "Taxi asignado a una solicitud",
+      `La unidad ${driver.unit_number} atenderá ${ride.folio}; llegada informada: ${ride.eta_minutes} min.`,
+      { rideId: ride.id, siteId: ride.site_id, page: "rides" });
     return;
   }
 
@@ -1763,6 +2008,9 @@ function performAction(database, account, action, payload) {
     ride.updated_at = date();
     routeEvent(ride, currentAccount.email, "special_price", `Salida especial confirmada: ${ride.unit_fare} por persona.`);
     record(database, currentAccount.email, "special_fare_confirmed", `Se confirmó ${ride.unit_fare} por persona para ${ride.folio}.`, ride.id);
+    notify(database, [ride.passenger_email], "special_fare_confirmed", "Tu destino y tarifa fueron confirmados",
+      `${ride.folio} · ${ride.destination_label} · total autorizado $${ride.estimated_fare}.`,
+      { rideId: ride.id, siteId: ride.site_id, page: "request" });
     return;
   }
 
@@ -1778,6 +2026,9 @@ function performAction(database, account, action, payload) {
     ride.updated_at = ride.eta_assigned_at;
     routeEvent(ride, currentAccount.email, "eta_updated", `Nuevo tiempo estimado: ${ride.eta_minutes} minutos.`);
     record(database, currentAccount.email, "eta_updated", `Se informó una llegada de ${ride.eta_minutes} minutos para ${ride.folio}.`, ride.id);
+    notify(database, [ride.passenger_email], "eta_updated", "Tiempo de llegada actualizado",
+      `Tu taxi llegará aproximadamente en ${ride.eta_minutes} minutos.`,
+      { rideId: ride.id, siteId: ride.site_id, page: "request" });
     return;
   }
 
@@ -1800,6 +2051,10 @@ function performAction(database, account, action, payload) {
     ride.manual_locations.push({ latitude, longitude, label: ride.pickup_label, recorded_at: ride.location_updated_at, kind: "manual" });
     routeEvent(ride, currentAccount.email, "location_updated", "La persona pasajera actualizó su ubicación manualmente; no se activó rastreo continuo.");
     record(database, currentAccount.email, "ride_location_updated", `Se actualizó de forma puntual la ubicación de ${ride.folio}.`, ride.id);
+    const assignedDriver = database.drivers.find((item) => item.id === ride.driver_id);
+    notify(database, [assignedDriver?.email || "", siteEmail(database, ride.site_id)], "pickup_updated",
+      "El pasajero actualizó su ubicación", `${ride.folio} · revisa el nuevo punto de recogida proporcionado manualmente.`,
+      { rideId: ride.id, siteId: ride.site_id, page: "rides" });
     return;
   }
 
@@ -1823,6 +2078,14 @@ function performAction(database, account, action, payload) {
     const messages = { arrived: "La unidad llegó al punto de partida.", in_progress: "Se verificó el código y comenzó el viaje.", completed: "El viaje se completó correctamente." };
     routeEvent(ride, currentAccount.email, next, messages[next]);
     record(database, currentAccount.email, "ride_updated", messages[next], ride.id);
+    const titles = { arrived: "Tu taxi ya llegó", in_progress: "Tu viaje comenzó", completed: "Tu viaje terminó" };
+    notify(database, [ride.passenger_email], `ride_${next}`, titles[next],
+      next === "arrived" ? `Taxi ${driver.unit_number} te espera en el punto de recogida.` :
+        next === "completed" ? `${ride.folio} terminó. Puedes calificar tu experiencia.` : `${ride.folio} está en camino a ${ride.destination_label}.`,
+      { rideId: ride.id, siteId: ride.site_id, page: next === "completed" ? "history" : "request" });
+    notify(database, [siteEmail(database, ride.site_id), ...adminEmails(database)], `site_ride_${next}`,
+      titles[next], `${ride.folio} · unidad ${driver.unit_number} · ${messages[next]}`,
+      { rideId: ride.id, siteId: ride.site_id, page: "rides" });
     return;
   }
 
@@ -1837,9 +2100,17 @@ function performAction(database, account, action, payload) {
     if (!["requested", "accepted", "arrived"].includes(ride.status)) throw new AppError("Este viaje ya no puede cancelarse.", 409);
     ride.status = "cancelled";
     ride.updated_at = date();
+    ride.cancelled_by = currentAccount.email;
+    ride.cancelled_by_role = currentAccount.role;
     if (driver?.active) driver.status = occupiedSeats(database, driver.id) ? "busy" : "available";
     routeEvent(ride, currentAccount.email, "cancelled", "Servicio cancelado sin rastreo continuo.");
     record(database, currentAccount.email, "ride_cancelled", `Se canceló el viaje ${ride.folio}.`, ride.id);
+    const actorLabel = currentAccount.role === "passenger" ? "La persona pasajera" :
+      currentAccount.role === "driver" ? "El taxista" : currentAccount.role === "site" ? "El sitio" : "La administración";
+    notify(database, [ride.passenger_email, driver?.email || "", siteEmail(database, ride.site_id), ...adminEmails(database)]
+      .filter((recipient) => email(recipient) !== currentAccount.email), "ride_cancelled", "Servicio cancelado",
+      `${actorLabel} canceló ${ride.folio} con destino a ${ride.destination_label}.`,
+      { rideId: ride.id, siteId: ride.site_id, page: "history" });
     return;
   }
 
@@ -1877,6 +2148,9 @@ function performAction(database, account, action, payload) {
     };
     database.reports.unshift(report);
     record(database, currentAccount.email, "report_created", `Se registró reporte ${category} para ${ride.folio}; revisión del sitio requerida.`, ride.id);
+    notify(database, [siteEmail(database, ride.site_id), ...adminEmails(database)], "passenger_service_report",
+      "Nuevo reporte sobre un servicio", `${ride.folio} requiere revisión del sitio por un comentario de seguridad o calidad.`,
+      { rideId: ride.id, siteId: ride.site_id, reportId: report.id, page: "reports" });
     return { id: report.id };
   }
 
@@ -1891,6 +2165,69 @@ function performAction(database, account, action, payload) {
     report.resolved_by = currentAccount.email;
     report.updated_at = date();
     record(database, currentAccount.email, "report_updated", `Se ${report.status === "resolved" ? "resolvió" : "puso en revisión"} el reporte del servicio ${report.folio}.`, report.ride_id);
+    notify(database, [report.passenger_email], "service_report_updated", "Tu comentario recibió seguimiento",
+      `${report.folio}: el sitio ${report.status === "resolved" ? "registró una respuesta" : "está revisando tu reporte"}.`,
+      { rideId: report.ride_id, siteId: report.site_id, reportId: report.id, page: "reports" });
+    return;
+  }
+
+  if (action === "createPassengerReport") {
+    if (currentAccount.role !== "driver") throw new AppError("Solo un taxista puede reportar a pasajeros de sus propios servicios.", 403);
+    const driver = database.drivers.find((item) => item.email === currentAccount.email);
+    const ride = database.rides.find((item) => item.id === value(payload.rideId, 64) && item.driver_id === driver?.id);
+    if (!driver || !ride || ride.site_id !== driver.site_id) {
+      throw new AppError("Solo puedes reportar pasajeros que fueron asignados personalmente a tu unidad.", 403);
+    }
+    const category = value(payload.category, 40);
+    if (!DRIVER_REPORT_CATEGORIES.has(category)) throw new AppError("Selecciona un motivo válido para el reporte privado.");
+    const details = value(payload.details, 1200);
+    if (details.length < 12) throw new AppError("Describe la situación con hechos concretos y al menos 12 caracteres.");
+    if (database.passenger_reports.some((item) => item.ride_id === ride.id && item.driver_id === driver.id &&
+      item.category === category && ["open", "reviewing"].includes(item.status))) {
+      throw new AppError("Ya existe un reporte privado pendiente con ese motivo para este servicio.", 409);
+    }
+    const metrics = passengerMetrics(database, ride.passenger_email, ride.site_id);
+    const report = {
+      id: randomUUID(), ride_id: ride.id, folio: ride.folio, site_id: ride.site_id, driver_id: driver.id,
+      driver_email: driver.email, driver_name: driver.name, driver_unit: driver.unit_number,
+      passenger_email: ride.passenger_email, passenger_name: ride.passenger_name, category, details,
+      cancellation_count_at_report: metrics.passenger_cancellations,
+      severity: ["mistreatment", "payment_refusal", "vehicle_damage", "unsafe_conduct"].includes(category) ? "high" : "normal",
+      status: "open", site_rating: null, resolution: "", resolved_by: "", created_at: date(), updated_at: date(),
+    };
+    database.passenger_reports.unshift(report);
+    record(database, currentAccount.email, "driver_passenger_report_created",
+      `La unidad ${driver.unit_number} registró un reporte privado ${category} para ${ride.folio}; solo su sitio y administración pueden revisarlo.`, ride.id);
+    notify(database, [siteEmail(database, ride.site_id), ...adminEmails(database)], "driver_passenger_report",
+      "Un taxista reportó a un pasajero", `Taxi ${driver.unit_number} · ${ride.folio} · requiere revisión privada del sitio.`,
+      { rideId: ride.id, siteId: ride.site_id, reportId: report.id, page: "passenger-reports" });
+    return { id: report.id };
+  }
+
+  if (action === "resolvePassengerReport") {
+    const report = database.passenger_reports.find((item) => item.id === value(payload.reportId, 64));
+    if (!report) throw new AppError("No encontramos ese reporte privado del taxista.", 404);
+    requireSiteOrAdmin(database, currentAccount, report.site_id);
+    const resolution = value(payload.resolution, 1000);
+    if (resolution.length < 10) throw new AppError("Documenta la revisión y la medida interna adoptada por el sitio.");
+    const status = value(payload.status, 20);
+    if (!["reviewing", "confirmed", "dismissed"].includes(status)) throw new AppError("Selecciona un resultado válido para la revisión.");
+    const rating = payload.siteRating === "" || payload.siteRating === null || payload.siteRating === undefined ? null : Math.round(number(payload.siteRating, NaN));
+    if (rating !== null && (!Number.isFinite(rating) || rating < 1 || rating > 5)) {
+      throw new AppError("La calificación interna debe ser de 1 a 5 estrellas.");
+    }
+    if (status === "confirmed" && rating === null) throw new AppError("Al confirmar un reporte, asigna una calificación interna de 1 a 5.");
+    report.status = status;
+    report.site_rating = status === "confirmed" ? rating : null;
+    report.resolution = resolution;
+    report.resolved_by = currentAccount.email;
+    report.updated_at = date();
+    record(database, currentAccount.email, "driver_passenger_report_reviewed",
+      `Se revisó de forma privada el reporte del taxi ${report.driver_unit} en ${report.folio}: ${status}${report.site_rating ? `; calificación interna ${report.site_rating}/5` : ""}.`, report.ride_id);
+    notify(database, [report.driver_email], "driver_report_reviewed", "Tu sitio revisó el reporte privado",
+      `${report.folio}: ${status === "confirmed" ? `reporte confirmado · calificación interna ${rating}/5` :
+        status === "dismissed" ? "el sitio descartó el reporte" : "el sitio está revisando lo ocurrido"}.`,
+      { rideId: report.ride_id, siteId: report.site_id, reportId: report.id, page: "passenger-reports" });
     return;
   }
 
@@ -1902,16 +2239,26 @@ function performAction(database, account, action, payload) {
     const beforeRides = [...database.rides];
     const originalEvents = database.activity.length;
     const originalReports = database.reports.length;
+    const originalPassengerReports = database.passenger_reports.length;
+    const originalNotifications = database.notifications.length;
     database.rides = database.rides.filter((ride) => {
       if (!["completed", "cancelled"].includes(ride.status) || ride.legal_hold === true) return true;
       if (database.reports.some((report) => report.ride_id === ride.id &&
         (report.status !== "resolved" || Date.parse(report.updated_at || report.created_at || "") >= cutoff))) return true;
+      if (database.passenger_reports.some((report) => report.ride_id === ride.id &&
+        (["open", "reviewing"].includes(report.status) || Date.parse(report.updated_at || report.created_at || "") >= cutoff))) return true;
       const stamp = Date.parse(ride.completed_at || ride.updated_at || ride.created_at || "");
       return !Number.isFinite(stamp) || stamp >= cutoff;
     });
     const retainedRides = new Set(database.rides.map((ride) => ride.id));
     const photosToDelete = beforeRides.filter((ride) => !retainedRides.has(ride.id) && ride.pickup_photo_key).map((ride) => ride.pickup_photo_key);
     database.reports = database.reports.filter((report) => retainedRides.has(report.ride_id) || report.status !== "resolved");
+    database.passenger_reports = database.passenger_reports.filter((report) =>
+      retainedRides.has(report.ride_id) || ["open", "reviewing"].includes(report.status));
+    database.notifications = database.notifications.filter((item) => {
+      const stamp = Date.parse(item.created_at || "");
+      return !Number.isFinite(stamp) || stamp >= cutoff;
+    });
     database.activity = database.activity.filter((entry) => {
       const stamp = Date.parse(entry.created_at || entry.at || "");
       return !Number.isFinite(stamp) || stamp >= cutoff;
@@ -1919,9 +2266,11 @@ function performAction(database, account, action, payload) {
     const removed = originalRides - database.rides.length;
     const activityRemoved = originalEvents - database.activity.length;
     const reportsRemoved = originalReports - database.reports.length;
+    const passengerReportsRemoved = originalPassengerReports - database.passenger_reports.length;
+    const notificationsRemoved = originalNotifications - database.notifications.length;
     database.settings.last_purge_at = date();
-    record(database, currentAccount.email, "retention_purge", `Se depuraron ${removed} servicios, ${reportsRemoved} reportes resueltos y ${activityRemoved} eventos vencidos.`, null);
-    return { removed, reportsRemoved, activityRemoved, retentionDays, _photosToDelete: photosToDelete };
+    record(database, currentAccount.email, "retention_purge", `Se depuraron ${removed} servicios, ${reportsRemoved} reportes, ${passengerReportsRemoved} observaciones privadas, ${notificationsRemoved} avisos y ${activityRemoved} eventos vencidos.`, null);
+    return { removed, reportsRemoved, passengerReportsRemoved, notificationsRemoved, activityRemoved, retentionDays, _photosToDelete: photosToDelete };
   }
 
   if (action === "saveSettings") {
@@ -2041,6 +2390,7 @@ export default async function handler(request) {
       }
     }
 
+    const existingNotifications = new Set(database.notifications.map((item) => item.id));
     const saved = await transaction((current) => performAction(current, account, action, payload));
     const result = { ...(saved.result || {}) };
     const expiredPhotos = Array.isArray(result._photosToDelete) ? result._photosToDelete : [];
@@ -2051,6 +2401,11 @@ export default async function handler(request) {
       if (result.photosRemoved !== expiredPhotos.length) {
         result.cleanupWarning = "Algunas fotografías requieren revisión manual de eliminación.";
       }
+    }
+    const addedNotifications = saved.data.notifications.filter((item) => !existingNotifications.has(item.id));
+    if (addedNotifications.length) {
+      try { await deliverPushNotifications(saved.data, addedNotifications, configuration); }
+      catch (error) { console.warn("No fue posible entregar algunas notificaciones del navegador:", error.message); }
     }
     return response({ ok: true, ...result });
   } catch (error) {

@@ -4,6 +4,21 @@
   const query=new URLSearchParams(window.location.search);
   const requestedSite=query.get("site");
   const endpoint="/api/taxi?public=legal"+(requestedSite?"&site="+encodeURIComponent(requestedSite):"");
+  if(window.location.pathname.endsWith("/privacidad.html")){
+    const add=(selector,tag,text)=>{
+      const parent=document.querySelector(selector);
+      if(!parent)return;
+      const node=document.createElement(tag);node.textContent=text;parent.appendChild(node);
+    };
+    add("#apartado-3 ul","li","Notificaciones operativas, registro de lectura y, si autorizas avisos del dispositivo, una dirección técnica de suscripción cifrada y claves públicas necesarias para entregar Web Push.");
+    add("#apartado-3 ul","li","Reportes privados elaborados por el taxista sobre un servicio propio, conteo de cancelaciones, hechos documentados, revisión humana del sitio y calificación interna no pública.");
+    add("#apartado-6 ul","li","Avisar solicitudes, asignaciones, llegadas, cancelaciones y seguimiento de reportes; el permiso para avisos del dispositivo es opcional y revocable.");
+    add("#apartado-10","p","Los reportes privados sobre pasajeros solo son accesibles para el taxista que atendió ese servicio, el sitio directamente responsable y la administración maestra. No se publican, no se muestran a otras bases, no son visibles al pasajero en la interfaz y no se comparten con otros conductores.");
+    add("#apartado-12","p","Si activas voluntariamente las notificaciones del sistema, se utiliza un trabajador de servicio y una suscripción cifrada del navegador. Puedes desactivarla en cualquier momento; no se usa para seguimiento de ubicación, publicidad ni identificación entre sitios.");
+    add("#apartado-16","p","Las cancelaciones se contabilizan como hechos operativos. Toda observación o calificación interna de un pasajero requiere revisión humana del sitio o de la administración; no debe utilizarse como acusación pública ni producir suspensiones o negativas automáticas.");
+    const date=document.querySelector(".legal-date");
+    if(date)date.textContent="Última actualización: 25 de agosto de 2026 · Versión 2026-08-25";
+  }
   function fill(selector,values,attribute){
     document.querySelectorAll(selector).forEach(node=>{
       const key=node.getAttribute(attribute);

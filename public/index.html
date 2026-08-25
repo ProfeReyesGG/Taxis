@@ -594,6 +594,170 @@ a { color: inherit; text-decoration: none; }
 
 html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791;--forest-soft:#183329;--lime:#c4ef86;--cream:#101614;--surface:#17211d;--ink:#ecf2ed;--muted:#a1ada5;--line:#2c3932;--shadow:0 24px 70px rgb(0 0 0 / 28%)}html[data-theme="dark"] body{background:var(--cream);color:var(--ink)}html[data-theme="dark"] :is(.app-sidebar,.access-card,.gate-choice,.metric-card:not(.metric-highlight),.setup-guide,.overview-map-card,.activity-card,.organization-card,.driver-card,.ride-card,.site-card,.report-card,.passenger-directory-card,.audit-card,.settings-block,.profile-form,.modal-card,.tariff-table-wrap,.driver-schedule-card,.available-request-card,.master-change-log,.site-ready-note,.search-field,.shared-opportunity-card,.active-passenger-selector>button,.destination-chip,.secondary-button,.driver-documents-button,.reset-password-button,.mobile-bottom-nav,.loading-card){background:var(--surface);color:var(--ink);border-color:var(--line)}html[data-theme="dark"] :is(input,select,textarea,.manual-assignment select,.manual-assignment input,.destination-selector select,.schedule-selector select,.schedule-datetime input){background:#111a16;color:var(--ink);border-color:var(--line)}html[data-theme="dark"] :is(.sidebar-support,.safety-advisory,.csv-help-card,.report-notice,.shared-opportunities,.profile-photo-editor,.audit-location-history,.report-resolution,.driver-capacity-card,.cash-only-banner){background:#172b21;border-color:#294437;color:var(--ink)}html[data-theme="dark"] :is(.safety-advisory p,.site-card-contact,.fare-lines>span,.report-folio,.report-details,.confirmation-note,.arrival-note,.header-location,.nav-link){color:var(--muted)}html[data-theme="dark"] .app-header{background:rgb(16 22 20 / 93%)}html[data-theme="dark"] :is(.primary-button,.metric-highlight,.brand-symbol){background:#245f49;color:#fff}html[data-theme="dark"] .gate-icon{background:#223128}html[data-theme="dark"] :is(.pending-fare-card,.child-safety-note,.legal-acceptance-card,.compliance-warning,.driver-capacity-last){background:#36281d;border-color:#604631;color:#f0cd9f}html[data-theme="dark"] .reset-warning{background:#38201f;border-color:#69413e;color:#f4c3be}html[data-theme="dark"] .master-danger-button{border-color:#734843;color:#f0a7a0}html[data-theme="dark"] .master-danger-button:hover{background:#38201f}html[data-theme="dark"] .reset-final-button{background:#a43e3e;color:#fff}@media(max-width:720px){.welcome-tools{gap:7px}.theme-toggle{width:35px;height:35px}.master-tools-actions>button{flex:1}.header-actions{gap:10px}}
 
+/* Escala móvil legible: evita que la aplicación parezca una página de escritorio reducida. */
+@media (max-width: 720px) {
+  .app-header {
+    min-height: 68px;
+    height: auto;
+    padding: max(10px, env(safe-area-inset-top)) 16px 10px;
+  }
+  .mobile-menu-button { width: 42px; height: 42px; border-radius: 11px; }
+  .header-location { gap: 7px; font-size: 13px; }
+  .header-location svg { width: 21px; height: 21px; flex: none; }
+  .header-user .avatar-small { width: 40px; height: 40px; border-radius: 11px; font-size: 13px; }
+  .service-badge > span { width: 9px; height: 9px; }
+  .theme-toggle { width: 40px; height: 40px; }
+
+  .app-content { padding: 30px 16px calc(112px + env(safe-area-inset-bottom)); }
+  .section-title { display: grid; gap: 8px; margin-bottom: 24px; }
+  .section-eyebrow { font-size: 11px; line-height: 1.35; letter-spacing: 1.45px; }
+  .section-title h1 { margin: 6px 0 3px; font-size: clamp(32px, 9.4vw, 40px); line-height: 1.08; letter-spacing: -1.5px; }
+  .section-title p { max-width: none; font-size: 15px; line-height: 1.55; }
+  .section-actions { width: 100%; }
+  .section-actions :is(.top-action, .secondary-button) { width: 100%; }
+
+  .ride-builder, .ride-live-panel, .driver-active-card,
+  .ride-card, .site-card, .report-card, .passenger-directory-card,
+  .audit-card, .settings-block, .available-request-card {
+    padding: 19px;
+    border-radius: 17px;
+  }
+  .ride-live-panel h2, .driver-active-card h2 { margin: 22px 0 10px; font-size: 28px; line-height: 1.15; letter-spacing: -1px; }
+  .live-subtitle { margin-bottom: 23px; font-size: 15px; line-height: 1.55; }
+  .ride-status { padding: 8px 11px; font-size: 11px; }
+  .ride-status > span { width: 8px; height: 8px; }
+  .scheduled-ride-label, .shared-ride-label { gap: 8px; margin: 13px 0; font-size: 13px; line-height: 1.45; }
+
+  .route-preview { gap: 14px; padding: 19px 0; }
+  .route-preview-track { width: 17px; padding-top: 7px; }
+  .route-dot-start, .route-dot-end { width: 13px; height: 13px; }
+  .route-dot-start { border-width: 4px; }
+  .route-dash { height: 37px; margin: 5px 0; }
+  .route-preview-labels { gap: 20px; }
+  .route-preview-labels small { font-size: 10px; letter-spacing: 1px; }
+  .route-preview-labels strong { font-size: 15px; line-height: 1.35; text-overflow: initial; white-space: normal; overflow-wrap: anywhere; }
+  .route-preview-small .route-preview-labels { gap: 15px; }
+  .route-preview-small .route-dash { height: 29px; }
+
+  .security-code-box { padding: 17px; margin-top: 17px; border-radius: 13px; }
+  .security-code-box > div { gap: 12px; }
+  .security-code-box > div > span { font-size: 10px; line-height: 1.4; letter-spacing: .8px; }
+  .security-code-box > div > strong { font-size: 34px; line-height: 1; letter-spacing: 6px; }
+  .security-code-box p { margin-top: 11px; font-size: 12px; line-height: 1.5; }
+  .fare-lines { gap: 11px; padding: 18px 0; }
+  .fare-lines > span { gap: 15px; font-size: 14px; line-height: 1.45; }
+  .fare-lines > span strong { flex: none; }
+  .fare-summary { padding: 20px 0 17px; }
+  .fare-summary > span { font-size: 14px; }
+  .fare-summary > strong { font-size: 29px; }
+
+  .assigned-driver { gap: 12px; padding: 16px 0; }
+  .assigned-driver > div strong { font-size: 14px; }
+  .assigned-driver > div span, .assigned-driver > div small { font-size: 12px; line-height: 1.45; }
+  .assigned-driver .driver-portrait { width: 54px; height: 54px; }
+  .round-contact { width: 44px; height: 44px; }
+  .eta-passenger-box { padding: 16px; }
+  .eta-passenger-box strong { font-size: 18px; }
+  .eta-passenger-box span { font-size: 12px; }
+
+  .secondary-button, .primary-button, .top-action { min-height: 50px; padding: 0 15px; font-size: 14px; border-radius: 12px; }
+  .share-ride-button { margin-top: 13px; white-space: normal; line-height: 1.3; }
+  .manual-location-note { margin-top: 9px; font-size: 12px; line-height: 1.5; }
+  .emergency-link, .text-danger-button { min-height: 46px; align-items: center; font-size: 13px; }
+  .safety-advisory { padding: 17px; }
+  .safety-advisory strong { font-size: 14px; }
+  .safety-advisory p { font-size: 13px; line-height: 1.55; }
+  .safety-advisory a { font-size: 12px; }
+
+  .location-input-row { min-height: 76px; padding: 0 14px; }
+  .location-input-row > span:nth-child(2) > small,
+  .builder-quick > span, .payment-selector > span, .organization-groups > span { font-size: 10px; }
+  .location-input-row input, .notes-input,
+  .form-field > input, .form-field > select, .form-field > textarea,
+  .schedule-selector select, .schedule-datetime input,
+  .destination-selector select, .passenger-site-selector select,
+  .compact-field select, .manual-assignment select, .manual-assignment input {
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .form-field { gap: 8px; }
+  .form-field > span { font-size: 13px; }
+  .form-field > small { font-size: 12px; line-height: 1.5; }
+  .quick-chip, .destination-chip { min-height: 40px; padding: 0 13px; font-size: 12px; }
+  .passenger-count > div:first-child { font-size: 14px; }
+  .passenger-count button { width: 40px; height: 40px; font-size: 20px; }
+  .passenger-count strong { font-size: 15px; }
+  .cash-only-banner, .capacity-note, .confirmation-note { font-size: 13px; }
+
+  .folio-label { font-size: 12px; }
+  .ride-time { font-size: 11px; }
+  .ride-card-meta { gap: 12px; padding-top: 13px; }
+  .ride-card-meta > span { font-size: 12px; }
+  .ride-card-meta > strong { font-size: 19px; }
+  .ride-price-breakdown, .arrival-note { font-size: 12px; line-height: 1.5; }
+  .ride-person { font-size: 12px; }
+
+  .metric-card { min-height: 132px; padding: 15px; }
+  .metric-card > span { font-size: 10px; line-height: 1.35; }
+  .metric-card > strong { font-size: 29px; }
+  .metric-card > p { font-size: 11px; line-height: 1.4; }
+  .organization-metrics strong { font-size: 23px; }
+  .organization-metrics span { font-size: 10px; }
+  .subsection-heading h2 { font-size: 18px; }
+  .subsection-heading p, .activity-item p { font-size: 12px; }
+  .activity-item small { font-size: 11px; }
+
+  .legal-footer > div strong { font-size: 14px; }
+  .legal-footer > div span, .legal-footer nav a { font-size: 12px; line-height: 1.5; }
+  .mobile-bottom-nav { min-height: 76px; padding: 10px 4px max(11px, env(safe-area-inset-bottom)); }
+  .mobile-bottom-nav > button { min-width: 62px; min-height: 50px; gap: 5px; }
+  .mobile-bottom-nav > button > span > svg { width: 24px; height: 24px; }
+  .mobile-bottom-nav > button small { font-size: 11px; line-height: 1.15; }
+  .toast-message { bottom: calc(91px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 390px) {
+  .app-content { padding-right: 14px; padding-left: 14px; }
+  .section-title h1 { font-size: clamp(30px, 9.2vw, 35px); }
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+  .mobile-bottom-nav > button { min-width: 52px; }
+  .mobile-bottom-nav > button small { font-size: 10px; }
+}
+
+/* Avisos persistentes, Web Push y observaciones privadas de pasajeros. */
+.notification-button { position: relative; display: grid; width: 39px; height: 39px; flex: none; place-items: center; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); color: var(--forest); }
+.notification-button > i { position: absolute; top: -6px; right: -7px; display: grid; min-width: 19px; height: 19px; padding: 0 5px; place-items: center; border: 2px solid var(--cream); border-radius: 999px; background: #d45e46; color: white; font-size: 9px; font-style: normal; font-weight: 760; }
+.notification-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 20px; }
+.notification-list { display: grid; gap: 10px; }
+.notification-card { display: flex; align-items: flex-start; gap: 13px; padding: 17px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.notification-card.is-unread { border-color: #bdd4c3; background: #f2f8f3; }
+.notification-card > span { display: grid; width: 37px; height: 37px; flex: none; place-items: center; border-radius: 11px; background: var(--forest-soft); color: var(--forest); }
+.notification-copy { display: grid; min-width: 0; flex: 1; gap: 5px; }
+.notification-copy > strong { font-size: 13px; line-height: 1.4; }
+.notification-copy > p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.notification-copy > small { color: var(--muted); font-size: 10px; }
+.notification-open { min-height: 35px; padding: 0 9px; font-size: 10px; }
+.notification-permission-note { margin: 0 0 18px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.passenger-risk-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+.passenger-risk-summary > span { padding: 6px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 10px; }
+.passenger-risk-summary > span.is-alert { border-color: #ead7c7; background: #fff6ee; color: #946032; }
+.private-report-badge { display: inline-flex; align-items: center; gap: 5px; color: var(--forest); font-size: 10px; font-weight: 660; }
+.passenger-report-rating { margin: 9px 0 0; color: var(--forest); font-size: 12px; font-weight: 700; }
+html[data-theme="dark"] .notification-button, html[data-theme="dark"] .notification-card { border-color: var(--line); background: var(--surface); color: var(--ink); }
+html[data-theme="dark"] .notification-card.is-unread { border-color: #355a44; background: #182d21; }
+html[data-theme="dark"] .passenger-risk-summary > span.is-alert { border-color: #644833; background: #382b21; color: #e4c09a; }
+@media (max-width: 720px) {
+  .header-actions { gap: 8px; }
+  .notification-button { width: 40px; height: 40px; }
+  .notification-card { gap: 12px; padding: 15px; }
+  .notification-copy > strong { font-size: 14px; }
+  .notification-copy > p { font-size: 13px; }
+  .notification-copy > small, .notification-permission-note { font-size: 12px; }
+  .notification-open { min-height: 42px; padding: 0 9px; }
+  .passenger-risk-summary > span { font-size: 11px; }
+  .mobile-bottom-nav > button { min-width: 54px; }
+}
+
     </style>
   </head>
   <body>
@@ -686,6 +850,8 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
     setupError: "",
     map: null,
     toastTimer: 0,
+    pushEnabledHere: false,
+    notificationLinkHandled: false,
     theme: document.documentElement.dataset.theme === "dark" ? "dark" : "light",
     draft: {
       pickup: { ...PLACES[0] }, destination: null, selecting: "pickup", passengers: 1, payment: "cash", notes: "",
@@ -812,6 +978,84 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
     state.toastTimer = setTimeout(() => { notifications.innerHTML = ""; }, 4400);
   }
 
+  function supportsPush() {
+    return window.isSecureContext && "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
+  }
+
+  function pushKeyBytes(text) {
+    const normalized = String(text || "").replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+    return Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+  }
+
+  async function checkPushSubscription() {
+    if (!supportsPush() || Notification.permission !== "granted") {
+      state.pushEnabledHere = false;
+      return false;
+    }
+    try {
+      const registration = await navigator.serviceWorker.getRegistration("/");
+      state.pushEnabledHere = Boolean(registration && await registration.pushManager.getSubscription());
+      return state.pushEnabledHere;
+    } catch {
+      state.pushEnabledHere = false;
+      return false;
+    }
+  }
+
+  async function enableBrowserPush() {
+    if (!supportsPush()) {
+      toast("Este navegador no admite avisos del sistema. En iPhone agrega primero Taxi Turicato a tu pantalla de inicio.", true);
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") throw new Error("Autoriza las notificaciones en la configuración del navegador para recibir avisos.");
+      const registration = await navigator.serviceWorker.register("/taxi-service-worker.js", { scope: "/" });
+      await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: pushKeyBytes(state.data.push.public_key),
+        });
+      }
+      const serialized = subscription.toJSON();
+      const saved = await request("subscribePush", {
+        endpoint: serialized.endpoint, p256dh: serialized.keys?.p256dh, auth: serialized.keys?.auth,
+      }, { message: "Listo: recibirás notificaciones de este dispositivo aunque la página no esté abierta." });
+      if (saved) {
+        state.pushEnabledHere = true;
+        render();
+      }
+    } catch (error) {
+      toast(error.message || "No fue posible activar las notificaciones del dispositivo.", true);
+    }
+  }
+
+  async function disableBrowserPush(silent = false) {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration("/");
+      const subscription = await registration?.pushManager.getSubscription();
+      if (subscription) {
+        await request("unsubscribePush", { endpoint: subscription.endpoint });
+        await subscription.unsubscribe();
+      }
+      state.pushEnabledHere = false;
+      if (!silent) { render(); toast("Se desactivaron las notificaciones de este dispositivo."); }
+    } catch (error) {
+      if (!silent) toast(error.message || "No fue posible desactivar las notificaciones.", true);
+    }
+  }
+
+  function notificationPageFor(page) {
+    const role = state.data?.account.role;
+    if (page === "rides") return role === "admin" ? "rides" : role === "site" ? "site-rides" : role === "driver" ? "driver-dashboard" : "history";
+    if (page === "history") return role === "site" ? "site-history" : "history";
+    if (page === "request" && role !== "passenger") return role === "driver" ? "driver-dashboard" : role === "site" ? "site-dashboard" : "overview";
+    return navItems().some((item) => item.id === page) ? page : "notifications";
+  }
+
   async function request(action, values = {}, options = {}) {
     if (state.pending) return false;
     state.pending = true;
@@ -829,6 +1073,8 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
         state.data = null;
         state.page = "";
         state.authMode = "login";
+        state.notificationLinkHandled = false;
+        state.pushEnabledHere = false;
         render();
       } else {
         await refresh(false);
@@ -848,6 +1094,8 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
       const response = await fetch(API, { credentials: "same-origin", cache: "no-store", headers: { Accept: "application/json" } });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "No fue posible conectarse.");
+      const previous = state.data;
+      const knownNotifications = new Set((previous?.notifications || []).map((item) => item.id));
       state.setupError = "";
       state.data = data.authenticated ? data : null;
       if (state.data) {
@@ -858,8 +1106,21 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
         }
         if (!state.page) state.page = state.data.account.role === "admin" ? "overview" :
           state.data.account.role === "site" ? "site-dashboard" : state.data.account.role === "driver" ? "driver-dashboard" : "request";
+        if (!state.notificationLinkHandled) {
+          state.notificationLinkHandled = true;
+          const incoming = new URLSearchParams(window.location.search);
+          if (incoming.get("aviso")) {
+            state.page = notificationPageFor(incoming.get("aviso"));
+            history.replaceState({}, "", window.location.pathname + window.location.hash);
+          }
+          void checkPushSubscription().then((enabled) => { if (enabled && state.page === "notifications") render(); });
+        }
       }
       render();
+      if (quiet && previous?.account.email === state.data?.account.email) {
+        const fresh = (state.data.notifications || []).find((item) => !item.read_at && !knownNotifications.has(item.id));
+        if (fresh) toast(`${fresh.title}: ${fresh.body}`);
+      }
     } catch (error) {
       state.setupError = error.message || "No se pudo conectar con las funciones de Netlify.";
       if (!quiet || !state.data) render();
@@ -891,6 +1152,8 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
       { id: "tariffs", label: "Tarifas por destino", icon: "banknote" },
       { id: "rides", label: "Servicios", icon: "route", badge: data.rides.filter((ride) => ride.status === "requested").length },
       { id: "reports", label: "Reportes y calidad", icon: "bell", badge: data.reports.filter((report) => report.status !== "resolved").length },
+      { id: "passenger-reports", label: "Reportes de pasajeros", icon: "users", badge: data.passenger_reports.filter((report) => ["open", "reviewing"].includes(report.status)).length },
+      { id: "notifications", label: "Notificaciones", icon: "bell", badge: data.unread_notifications },
       { id: "route-history", label: "Auditoría de viajes", icon: "shield" },
       { id: "settings", label: "Configuración", icon: "settings" },
       { id: "passenger-preview", label: "Solicitar un taxi", icon: "pin" },
@@ -903,7 +1166,9 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
       { id: "site-drivers", label: "Mis taxistas", icon: "car" },
       { id: "site-history", label: "Historial del sitio", icon: "clock" },
       { id: "reports", label: "Reportes y calidad", icon: "shield", badge: data.reports.filter((report) => report.status !== "resolved").length },
+      { id: "passenger-reports", label: "Reportes de pasajeros", icon: "users", badge: data.passenger_reports.filter((report) => ["open", "reviewing"].includes(report.status)).length },
       { id: "site-passengers", label: "Mis pasajeros", icon: "users" },
+      { id: "notifications", label: "Notificaciones", icon: "bell", badge: data.unread_notifications },
       { id: "site-tariffs", label: "Tarifas autorizadas", icon: "banknote" },
       { id: "site-settings", label: "Tiempo y contacto", icon: "settings" },
       { id: "profile", label: "Mi perfil", icon: "users" },
@@ -912,12 +1177,15 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
       { id: "driver-dashboard", label: "Mi unidad", icon: "car", badge: data.rides.filter((ride) => ACTIVE.includes(ride.status)).length },
       { id: "history", label: "Mis servicios", icon: "route" },
       { id: "reports", label: "Mis observaciones", icon: "shield" },
+      { id: "passenger-reports", label: "Reportar pasajero", icon: "users", badge: data.passenger_reports.filter((report) => ["open", "reviewing"].includes(report.status)).length },
+      { id: "notifications", label: "Notificaciones", icon: "bell", badge: data.unread_notifications },
       { id: "profile", label: "Mi perfil", icon: "users" },
     ];
     return [
       { id: "request", label: "Pedir taxi", icon: "pin" },
       { id: "history", label: "Mis viajes", icon: "route" },
       { id: "reports", label: "Comentarios y reportes", icon: "shield" },
+      { id: "notifications", label: "Notificaciones", icon: "bell", badge: data.unread_notifications },
       { id: "profile", label: "Mi perfil", icon: "users" },
     ];
   }
@@ -943,10 +1211,12 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
     const links = navItems();
     const role = data.account.role === "admin" ? "Administración maestra" : data.account.role === "site" ? data.ownSite?.name || "Sitio autorizado" : data.account.role === "driver" ? "Taxista autorizado" : "Pasajero";
     const mobileLinks = data.account.role === "admin" ? links.filter((link) => ["overview", "sites", "drivers", "tariffs", "rides"].includes(link.id)) :
-      data.account.role === "site" ? links.filter((link) => ["site-dashboard", "site-rides", "site-drivers", "site-history", "profile"].includes(link.id)) : links;
-    const sidebar = `<aside class="app-sidebar ${state.sidebar ? "sidebar-open" : ""}"><div class="sidebar-top">${brand()}<button class="sidebar-close" data-action="close-sidebar" aria-label="Cerrar menú">${icon("x")}</button></div><div class="sidebar-role"><span>${esc(role.toUpperCase())}</span>${data.account.role === "admin" ? "<small>ACCESO MAESTRO TOTAL</small>" : data.account.role === "site" ? `<small>SOLO ${esc((data.ownSite?.town || "").toUpperCase())}</small>` : ""}</div><nav class="sidebar-nav">${links.map((link, index) => `${data.account.role === "admin" && index === 8 ? '<span class="sidebar-separator">VISTAS OPERATIVAS</span>' : ""}<button class="nav-link ${state.page === link.id ? "nav-active" : ""}" data-action="navigate" data-page="${esc(link.id)}">${icon(link.icon)}<span>${esc(link.label)}</span>${link.badge ? `<span class="nav-badge">${link.badge}</span>` : ""}</button>`).join("")}</nav><div class="sidebar-support"><span>${icon("shield", 16)} SERVICIO VERIFICADO</span><p>Viaja tranquilo.<br>Llega seguro.</p>${data.settings.support_phone ? `<a href="tel:${esc(String(data.settings.support_phone).replace(/[^\d+]/g, ""))}">${icon("phone", 15)} Soporte local</a>` : ""}</div><button class="sidebar-logout logout-button" data-action="logout">${icon("logout")}<span>Cerrar sesión</span></button></aside>`;
-    const header = `<header class="app-header"><button class="mobile-menu-button" data-action="open-sidebar" aria-label="Abrir menú">${icon("menu")}</button><span class="header-location">${icon("pin", 17)}${esc(data.settings.service_area)}</span><div class="header-actions"><span class="service-badge ${data.settings.service_enabled ? "" : "service-paused"}"><span></span>${data.settings.service_enabled ? "Servicio activo" : "Servicio pausado"}</span>${themeButton()}<button class="header-user" data-action="navigate" data-page="profile">${avatar(data.account.name, true)}<span>${esc(data.account.name.split(" ")[0])}</span></button></div></header>`;
-    const short = { overview: "Inicio", sites: "Sitios", drivers: "Taxis", tariffs: "Tarifas", rides: "Viajes", "site-dashboard": "Inicio", "site-rides": "Servicios", "site-drivers": "Taxis", "site-history": "Historial", profile: "Perfil", organizations: "Grupos" };
+      data.account.role === "site" ? links.filter((link) => ["site-dashboard", "site-rides", "site-drivers", "passenger-reports", "profile"].includes(link.id)) :
+      data.account.role === "driver" ? links.filter((link) => ["driver-dashboard", "history", "passenger-reports", "notifications", "profile"].includes(link.id)) : links;
+    const sidebar = `<aside class="app-sidebar ${state.sidebar ? "sidebar-open" : ""}"><div class="sidebar-top">${brand()}<button class="sidebar-close" data-action="close-sidebar" aria-label="Cerrar menú">${icon("x")}</button></div><div class="sidebar-role"><span>${esc(role.toUpperCase())}</span>${data.account.role === "admin" ? "<small>ACCESO MAESTRO TOTAL</small>" : data.account.role === "site" ? `<small>SOLO ${esc((data.ownSite?.town || "").toUpperCase())}</small>` : ""}</div><nav class="sidebar-nav">${links.map((link) => `${data.account.role === "admin" && link.id === "settings" ? '<span class="sidebar-separator">VISTAS OPERATIVAS</span>' : ""}<button class="nav-link ${state.page === link.id ? "nav-active" : ""}" data-action="navigate" data-page="${esc(link.id)}">${icon(link.icon)}<span>${esc(link.label)}</span>${link.badge ? `<span class="nav-badge">${link.badge}</span>` : ""}</button>`).join("")}</nav><div class="sidebar-support"><span>${icon("shield", 16)} SERVICIO VERIFICADO</span><p>Viaja tranquilo.<br>Llega seguro.</p>${data.settings.support_phone ? `<a href="tel:${esc(String(data.settings.support_phone).replace(/[^\d+]/g, ""))}">${icon("phone", 15)} Soporte local</a>` : ""}</div><button class="sidebar-logout logout-button" data-action="logout">${icon("logout")}<span>Cerrar sesión</span></button></aside>`;
+    const bell = `<button class="notification-button" data-action="navigate" data-page="notifications" aria-label="Notificaciones${data.unread_notifications ? `: ${data.unread_notifications} sin leer` : ""}">${icon("bell", 19)}${data.unread_notifications ? `<i>${data.unread_notifications > 99 ? "99+" : data.unread_notifications}</i>` : ""}</button>`;
+    const header = `<header class="app-header"><button class="mobile-menu-button" data-action="open-sidebar" aria-label="Abrir menú">${icon("menu")}</button><span class="header-location">${icon("pin", 17)}${esc(data.settings.service_area)}</span><div class="header-actions"><span class="service-badge ${data.settings.service_enabled ? "" : "service-paused"}"><span></span>${data.settings.service_enabled ? "Servicio activo" : "Servicio pausado"}</span>${bell}${themeButton()}<button class="header-user" data-action="navigate" data-page="profile">${avatar(data.account.name, true)}<span>${esc(data.account.name.split(" ")[0])}</span></button></div></header>`;
+    const short = { overview: "Inicio", sites: "Sitios", drivers: "Taxis", tariffs: "Tarifas", rides: "Viajes", request: "Taxi", history: "Viajes", reports: "Reportes", notifications: "Avisos", "passenger-reports": "Reportes", "driver-dashboard": "Unidad", "site-dashboard": "Inicio", "site-rides": "Servicios", "site-drivers": "Taxis", "site-history": "Historial", profile: "Perfil", organizations: "Grupos" };
     const bottom = `<nav class="mobile-bottom-nav">${mobileLinks.map((link) => `<button class="${state.page === link.id ? "bottom-active" : ""}" data-action="navigate" data-page="${esc(link.id)}"><span>${icon(link.icon, 20)}${link.badge ? "<i></i>" : ""}</span><small>${esc(short[link.id] || link.label)}</small></button>`).join("")}</nav>`;
     app.innerHTML = `<main class="app-shell">${sidebar}${state.sidebar ? '<button class="sidebar-overlay" data-action="close-sidebar" aria-label="Cerrar menú"></button>' : ""}<section class="app-main">${header}<div class="app-content">${legalAcceptanceCard()}${content()}${legalFooter()}</div></section>${bottom}</main>`;
     prepareMaps();
@@ -968,6 +1238,8 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
       case "rides": return rides(true);
       case "route-history": return routeHistory();
       case "reports": return reports();
+      case "passenger-reports": return passengerReports();
+      case "notifications": return notificationCenter();
       case "settings": return settings();
       case "site-dashboard": return siteDashboard();
       case "site-rides": return rides(true);
@@ -1060,10 +1332,54 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
     return `<section class="content-section">${section("CALIDAD Y SEGURIDAD VIAL", role === "passenger" ? "Mis comentarios y reportes" : "Reportes y medidas", note, action)}<div class="report-notice">${icon("shield", 19)} Los reportes sirven para prevención, investigación responsable y mejora del servicio. Emergencias: <a href="tel:911">911</a>.</div>${cards ? `<div class="reports-grid">${cards}</div>` : empty("shield", "No hay comentarios ni incidentes registrados", role === "passenger" ? "Cuando tengas un taxi asignado podrás reportar conducción riesgosa o compartir una sugerencia." : "Los comentarios de tus pasajeros aparecerán aquí para darles seguimiento.")}</section>`;
   }
 
+  function notificationCenter() {
+    const data = state.data;
+    const supported = supportsPush();
+    const permission = supported ? Notification.permission : "unsupported";
+    const pushLabel = state.pushEnabledHere ? "Desactivar avisos de este dispositivo" : "Activar notificaciones en mi celular";
+    const pushAction = state.pushEnabledHere ? "disable-push" : "enable-push";
+    const controls = `<div class="notification-controls"><button class="${state.pushEnabledHere ? "secondary-button" : "primary-button"}" data-action="${pushAction}">${icon("bell", 17)}<span>${pushLabel}</span></button>${data.unread_notifications ? `<button class="secondary-button" data-action="mark-notifications-read">${icon("check", 17)} Marcar todas como leídas</button>` : ""}</div>`;
+    const instructions = !supported ? "Tu navegador no admite avisos del sistema. En iPhone, abre esta página en Safari y elige Compartir → Agregar a pantalla de inicio; después entra desde ese icono." :
+      permission === "denied" ? "Las notificaciones están bloqueadas en este navegador. Debes autorizarlas manualmente en la configuración del sitio." :
+      state.pushEnabledHere ? "Este dispositivo puede recibir avisos aunque cierres la página. Solo se mostrarán notificaciones relacionadas con tu cuenta." :
+      "La campanita y el historial funcionan desde ahora. Activa los avisos del dispositivo para recibirlos también cuando la página esté cerrada.";
+    const cards = (data.notifications || []).map((notice) => {
+      const kind = notice.type.includes("report") ? "shield" : notice.type.includes("cancel") ? "x" : notice.type.includes("eta") ? "clock" : notice.type.includes("ride") ? "car" : "bell";
+      return `<article class="notification-card ${notice.read_at ? "" : "is-unread"}"><span>${icon(kind, 20)}</span><div class="notification-copy"><strong>${esc(notice.title)}</strong><p>${esc(notice.body)}</p><small>${esc(when(notice.created_at))}${notice.read_at ? " · Leída" : " · Nueva"}</small></div><button class="secondary-button notification-open" data-action="open-notification" data-id="${esc(notice.id)}" data-page="${esc(notice.target_page || "notifications")}">Ver</button></article>`;
+    }).join("");
+    return `<section class="content-section">${section("AVISOS PRIVADOS DE TU CUENTA", "Notificaciones", "Solicitudes, taxis asignados, llegadas, cancelaciones y reportes relevantes para ti.")}${controls}<p class="notification-permission-note">${esc(instructions)}</p>${cards ? `<div class="notification-list">${cards}</div>` : empty("bell", "Todavía no tienes notificaciones", "Los cambios importantes de tus viajes y de tu sitio aparecerán aquí.")}</section>`;
+  }
+
+  function passengerReports() {
+    const data = state.data;
+    const role = data.account.role;
+    if (!["admin", "site", "driver"].includes(role)) return empty("shield", "Acceso restringido", "Esta información solo está disponible para personal autorizado.");
+    const labels = {
+      repeated_cancellation: "Cancelaciones frecuentes", no_show: "No se presentó", incorrect_location: "Ubicación incorrecta",
+      mistreatment: "Mal trato al conductor", payment_refusal: "Se negó a pagar", vehicle_damage: "Daños al vehículo",
+      unsafe_conduct: "Conducta insegura", pickup_delay: "Demora durante la recogida", other: "Otra observación",
+    };
+    const statuses = { open: "Pendiente", reviewing: "En revisión", confirmed: "Confirmado", dismissed: "Descartado" };
+    const ownRides = role === "driver" ? data.rides.filter((ride) => ride.driver_id === data.ownDriver?.id) : [];
+    const action = role === "driver" && ownRides.length ? `<button class="primary-button top-action" data-action="open-passenger-report-modal">${icon("plus")}<span>Reportar pasajero</span></button>` : "";
+    const cards = data.passenger_reports.map((report) => {
+      const metrics = data.passengers.find((person) => person.email === report.passenger_email)?.passenger_metrics;
+      const moderation = ["admin", "site"].includes(role) ? `<div class="report-actions"><button class="secondary-button" data-action="open-resolve-passenger-report" data-id="${esc(report.id)}">${["confirmed", "dismissed"].includes(report.status) ? "Actualizar revisión" : "Revisar y calificar"}</button></div>` : "";
+      const details = `<p class="report-folio">${esc(report.passenger_name)} · Taxi ${esc(report.driver_unit)} · Servicio ${esc(report.folio)} · ${esc(when(report.created_at))}</p>`;
+      const stats = metrics ? `<div class="passenger-risk-summary"><span class="${metrics.passenger_cancellations >= 2 ? "is-alert" : ""}">${metrics.passenger_cancellations} cancelaciones</span><span>${metrics.services} servicios del sitio</span>${metrics.rating_average !== null ? `<span class="is-alert">Calificación interna ★ ${Number(metrics.rating_average).toFixed(1)}</span>` : ""}</div>` : report.cancellation_count_at_report ? `<div class="passenger-risk-summary"><span class="is-alert">${report.cancellation_count_at_report} cancelación(es) registradas</span></div>` : "";
+      return `<article class="report-card ${report.severity === "high" ? "report-urgent" : ""}"><div class="report-heading"><strong>${esc(labels[report.category] || report.category)}</strong><span class="report-status report-${esc(report.status)}">${esc(statuses[report.status] || report.status)}</span></div><span class="private-report-badge">${icon("shield", 14)} Registro interno · nunca visible al pasajero</span>${details}<p class="report-details">${esc(report.details)}</p>${stats}${report.site_rating ? `<p class="passenger-report-rating">Calificación privada asignada por el sitio: ${"★".repeat(report.site_rating)}${"☆".repeat(5 - report.site_rating)} (${report.site_rating}/5)</p>` : ""}${report.resolution ? `<div class="report-resolution"><strong>Revisión interna del sitio</strong><p>${esc(report.resolution)}</p></div>` : ""}${moderation}</article>`;
+    }).join("");
+    const detail = role === "driver" ? "Tus reportes solo los consultan tú, tu sitio y la administración maestra; nunca aparecen al pasajero." :
+      "Revisa incidentes reportados por taxistas, valida los hechos y asigna una calificación interna. Las cancelaciones se contabilizan automáticamente.";
+    return `<section class="content-section">${section("REVISIÓN INTERNA Y PRIVADA", role === "driver" ? "Mis reportes sobre pasajeros" : "Reportes privados de pasajeros", detail, action)}<div class="report-notice">${icon("shield", 19)} Ninguna calificación o comentario de este apartado es público. Revisa siempre el contexto antes de registrar una medida.</div>${cards ? `<div class="reports-grid">${cards}</div>` : empty("users", "No hay reportes privados de pasajeros", role === "driver" ? "Puedes reportar a personas que hayan sido asignadas personalmente a tu taxi, incluso si cancelaron después." : "Las observaciones registradas por los taxistas de tu sitio aparecerán aquí.")}</section>`;
+  }
+
   function sitePassengers() {
     const cards = state.data.passengers.map((person) => {
       const ridesCount = state.data.rides.filter((ride) => ride.passenger_email === person.email).length;
-      return `<article class="passenger-directory-card">${photo(person.profile_photo_url, person.name, "driver-portrait")}<div><strong>${esc(person.name)}</strong><span>${ridesCount} ${ridesCount === 1 ? "servicio" : "servicios"} de tu sitio</span><small>${esc(person.phone || "Sin teléfono")}</small></div></article>`;
+      const metrics = person.passenger_metrics || {};
+      const flags = `<div class="passenger-risk-summary"><span class="${metrics.passenger_cancellations >= 2 ? "is-alert" : ""}">${metrics.passenger_cancellations || 0} cancelaciones</span>${metrics.open_reports ? `<span class="is-alert">${metrics.open_reports} reporte(s) en revisión</span>` : ""}${metrics.rating_average !== null && metrics.rating_average !== undefined ? `<span class="is-alert">★ ${Number(metrics.rating_average).toFixed(1)} interna</span>` : ""}</div>`;
+      return `<article class="passenger-directory-card">${photo(person.profile_photo_url, person.name, "driver-portrait")}<div><strong>${esc(person.name)}</strong><span>${ridesCount} ${ridesCount === 1 ? "servicio" : "servicios"} de tu sitio</span><small>${esc(person.phone || "Sin teléfono")}</small>${flags}</div></article>`;
     }).join("");
     return `<section class="content-section">${section("PASAJEROS DE TU PROPIA OPERACIÓN", "Control de pasajeros", "Solo aparecen personas que solicitaron recogida fuera de tu sitio; no tienes acceso a clientes de otras bases.")}${cards ? `<div class="passenger-directory">${cards}</div>` : empty("users", "Todavía no hay pasajeros del sitio", "Los clientes aparecerán después de solicitar un servicio a tu base.")}</section>`;
   }
@@ -1139,6 +1455,7 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
     }
     if (admin && ["requested", "accepted", "arrived"].includes(ride.status)) actions += `<button class="text-danger-button cancel-small" data-action="cancel-ride" data-id="${esc(ride.id)}">Cancelar viaje</button>`;
     if (!admin && state.data.account.role === "passenger" && ride.driver_id) actions += `<button class="link-button report-trip-button" data-action="open-report-modal" data-id="${esc(ride.id)}">${icon("shield", 15)} Comentar o reportar servicio</button>`;
+    if (!admin && state.data.account.role === "driver" && ride.driver_id === state.data.ownDriver?.id) actions += `<button class="link-button report-trip-button" data-action="open-passenger-report-modal" data-id="${esc(ride.id)}">${icon("shield", 15)} Reportar pasajero al sitio</button>`;
     const pendingPrice = ride.price_requires_confirmation || ride.estimated_fare === null || ride.estimated_fare === undefined;
     const price = pendingPrice ? "Destino por validar" : money(ride.final_fare ?? ride.estimated_fare);
     const eta = ride.driver_id && ride.eta_minutes ? `${ride.eta_minutes} min` : "Esperando taxista";
@@ -1230,7 +1547,7 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
       const submit = current.status === "accepted" ? "Ya llegué por el pasajero" : current.status === "arrived" ? "Verificar código e iniciar viaje" : "Finalizar viaje";
       const code = current.status === "arrived" ? '<label class="form-field"><span>Código de seguridad</span><input class="security-code-input" id="ride-security-code" inputmode="numeric" maxlength="4" placeholder="0000"><small>El pasajero puede verlo en su pantalla.</small></label>' : "";
       const selector = activeRides.length > 1 ? `<div class="active-passenger-selector"><strong>Servicios activos en esta unidad</strong>${activeRides.map((ride) => `<button class="${ride.id === current.id ? "active-passenger-selected" : ""}" data-action="select-active-ride" data-id="${esc(ride.id)}">${esc(ride.passenger_name)} · ${ride.passengers} lugar(es)</button>`).join("")}</div>` : "";
-      services = `${selector}<div class="driver-active-layout"><div class="driver-active-card">${rideStatus(current.status)}<h2>${esc(heading)}</h2>${current.scheduled_at ? `<div class="scheduled-ride-label">${icon("clock", 15)} ${esc(scheduleLabel(current.scheduled_at))}</div>` : ""}${routePreview(current.pickup_label, current.destination_label)}${current.arrival_point ? `<p class="arrival-note">Entrega: ${esc(current.arrival_point)}</p>` : ""}<div class="assigned-driver">${photo(current.passenger_photo_url, current.passenger_name, "driver-portrait")}<div><strong>${esc(current.passenger_name)}</strong><span>${current.passengers} pasajero${current.passengers === 1 ? "" : "s"}${current.child_passengers ? ` · ${current.child_passengers} menor(es)` : ""}</span>${current.notes ? `<small>${esc(current.notes)}</small>` : ""}</div>${current.passenger_phone ? `<a class="round-contact" href="tel:${esc(String(current.passenger_phone).replace(/[^\d+]/g, ""))}">${icon("phone")}</a>` : ""}</div>${current.pickup_photo_url ? `<figure class="pickup-photo-preview"><img src="${esc(current.pickup_photo_url)}" alt="Fachada del lugar donde se encuentra el pasajero"><figcaption>Fachada o referencia compartida por el pasajero</figcaption></figure>` : ""}${code}<div class="fare-summary"><span>Cobrar únicamente en efectivo</span><strong>${money(current.estimated_fare)}</strong></div><button class="primary-button action-wide" data-action="advance-ride" data-id="${esc(current.id)}"><span>${esc(submit)}</span>${icon("arrow")}</button>${current.status !== "in_progress" ? `<button class="text-danger-button" data-action="cancel-ride" data-id="${esc(current.id)}">Cancelar servicio</button>` : ""}</div><div class="map-host taxi-map" data-map="ride" data-id="${esc(current.id)}"></div></div>${cards ? `<div class="subsection-heading"><div><h2>Personas que solicitan un lugar en tu ruta</h2><p>Solo puedes aceptar solicitudes que respeten los ${seats} ${seats === 1 ? "lugar disponible" : "lugares disponibles"}.</p></div></div><div class="available-request-list">${cards}</div>` : ""}`;
+      services = `${selector}<div class="driver-active-layout"><div class="driver-active-card">${rideStatus(current.status)}<h2>${esc(heading)}</h2>${current.scheduled_at ? `<div class="scheduled-ride-label">${icon("clock", 15)} ${esc(scheduleLabel(current.scheduled_at))}</div>` : ""}${routePreview(current.pickup_label, current.destination_label)}${current.arrival_point ? `<p class="arrival-note">Entrega: ${esc(current.arrival_point)}</p>` : ""}<div class="assigned-driver">${photo(current.passenger_photo_url, current.passenger_name, "driver-portrait")}<div><strong>${esc(current.passenger_name)}</strong><span>${current.passengers} pasajero${current.passengers === 1 ? "" : "s"}${current.child_passengers ? ` · ${current.child_passengers} menor(es)` : ""}</span>${current.notes ? `<small>${esc(current.notes)}</small>` : ""}</div>${current.passenger_phone ? `<a class="round-contact" href="tel:${esc(String(current.passenger_phone).replace(/[^\d+]/g, ""))}">${icon("phone")}</a>` : ""}</div>${current.pickup_photo_url ? `<figure class="pickup-photo-preview"><img src="${esc(current.pickup_photo_url)}" alt="Fachada del lugar donde se encuentra el pasajero"><figcaption>Fachada o referencia compartida por el pasajero</figcaption></figure>` : ""}${code}<div class="fare-summary"><span>Cobrar únicamente en efectivo</span><strong>${money(current.estimated_fare)}</strong></div><button class="primary-button action-wide" data-action="advance-ride" data-id="${esc(current.id)}"><span>${esc(submit)}</span>${icon("arrow")}</button>${!preview ? `<button class="secondary-button share-ride-button" data-action="open-passenger-report-modal" data-id="${esc(current.id)}">${icon("shield", 16)} Reportar pasajero a mi sitio</button>` : ""}${current.status !== "in_progress" ? `<button class="text-danger-button" data-action="cancel-ride" data-id="${esc(current.id)}">Cancelar servicio</button>` : ""}</div><div class="map-host taxi-map" data-map="ride" data-id="${esc(current.id)}"></div></div>${cards ? `<div class="subsection-heading"><div><h2>Personas que solicitan un lugar en tu ruta</h2><p>Solo puedes aceptar solicitudes que respeten los ${seats} ${seats === 1 ? "lugar disponible" : "lugares disponibles"}.</p></div></div><div class="available-request-list">${cards}</div>` : ""}`;
     } else {
       services = `<div class="subsection-heading"><div><h2>Solicitudes disponibles de tu sitio</h2><p>${driver.status === "available" ? "Toma una solicitud si estás libre o pasarás por la zona; tu sitio verá la asignación." : "Marca tu unidad como disponible para revisar solicitudes."}</p></div></div>${cards ? `<div class="available-request-list">${cards}</div>` : empty("bell", driver.status === "available" ? "Sin solicitudes pendientes" : "Tu unidad está desconectada", driver.status === "available" ? "Cuando alguien solicite recogida fuera de tu sitio podrás tomar el servicio desde aquí." : "Activa tu disponibilidad cuando estés listo y con documentación vigente.")}`;
     }
@@ -1346,6 +1663,22 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
     const report = state.data.reports.find((item) => item.id === reportId);
     if (!report) return;
     modal("Registrar medida o respuesta", `${report.folio} · La persona usuaria podrá consultar la medida registrada.`, `<form class="modal-form" data-form="resolve-report"><input type="hidden" name="reportId" value="${esc(report.id)}"><label class="form-field"><span>Estado de seguimiento</span><select name="status"><option value="reviewing">En revisión con sitio y sindicato</option><option value="resolved">Atendido y resuelto</option></select></label><label class="form-field"><span>Medida tomada</span><textarea name="resolution" rows="5" minlength="10" maxlength="1000" required placeholder="Ej. Se entrevistó al conductor, se suspendió temporalmente la unidad y se reforzó capacitación.">${esc(report.resolution)}</textarea></label><button class="primary-button action-wide" type="submit"><span>Guardar seguimiento</span>${icon("check")}</button></form>`);
+  }
+
+  function passengerReportModal(rideId = "") {
+    if (state.data.account.role !== "driver") return;
+    const assigned = state.data.rides.filter((ride) => ride.driver_id === state.data.ownDriver?.id);
+    if (!assigned.length) { toast("Primero debes tener un servicio asignado para reportar a su pasajero.", true); return; }
+    const selected = assigned.some((ride) => ride.id === rideId) ? rideId : assigned[0].id;
+    state.modal = { type: "passenger-report" };
+    modal("Reportar pasajero de forma privada", "Solo tú, tu sitio y la administración maestra podrán consultar esta observación; el pasajero no verá el reporte.", `<form class="modal-form" data-form="passenger-report"><label class="form-field"><span>Persona y servicio relacionado</span><select name="rideId">${assigned.map((ride) => `<option value="${esc(ride.id)}" ${ride.id === selected ? "selected" : ""}>${esc(ride.passenger_name)} · ${esc(ride.folio)} · ${esc(STATUSES[ride.status] || ride.status)}</option>`).join("")}</select></label><label class="form-field"><span>Motivo de la observación</span><select name="category" required><option value="repeated_cancellation">Canceló o cancela con frecuencia</option><option value="no_show">No se presentó para abordar</option><option value="incorrect_location">Proporcionó una ubicación incorrecta</option><option value="pickup_delay">Demoró durante la recogida</option><option value="mistreatment">Mal trato al taxista</option><option value="payment_refusal">Se negó a pagar el servicio</option><option value="vehicle_damage">Daños al vehículo</option><option value="unsafe_conduct">Conducta insegura</option><option value="other">Otra situación</option></select></label><label class="form-field"><span>Describe únicamente lo sucedido</span><textarea name="details" rows="5" minlength="12" maxlength="1200" required placeholder="Explica hechos verificables: horario, cancelación, espera, ubicación o situación observada."></textarea><small>Evita insultos, suposiciones o datos sensibles. El sitio revisará antes de asignar una calificación privada.</small></label><button class="primary-button action-wide" type="submit"><span>Enviar reporte privado a mi sitio</span>${icon("shield")}</button></form>`);
+  }
+
+  function resolvePassengerReportModal(reportId) {
+    const report = state.data.passenger_reports.find((item) => item.id === reportId);
+    if (!report || !["admin", "site"].includes(state.data.account.role)) return;
+    state.modal = { type: "resolve-passenger-report" };
+    modal("Revisar observación y calificación interna", `${report.passenger_name} · ${report.folio}. Esta revisión es privada y no debe implicar bloqueos automáticos.`, `<form class="modal-form" data-form="resolve-passenger-report"><input type="hidden" name="reportId" value="${esc(report.id)}"><label class="form-field"><span>Resultado de la revisión del sitio</span><select name="status"><option value="reviewing" ${report.status === "reviewing" ? "selected" : ""}>Continúa en revisión</option><option value="confirmed" ${report.status === "confirmed" ? "selected" : ""}>Confirmar y asignar calificación privada</option><option value="dismissed" ${report.status === "dismissed" ? "selected" : ""}>Descartar por falta de elementos</option></select></label><label class="form-field"><span>Calificación interna del pasajero</span><select name="siteRating"><option value="">Sin calificación mientras se revisa</option>${[1, 2, 3, 4, 5].map((rating) => `<option value="${rating}" ${Number(report.site_rating) === rating ? "selected" : ""}>${rating} ${rating === 1 ? "estrella" : "estrellas"}</option>`).join("")}</select><small>Se solicita únicamente al confirmar el reporte y solo será visible internamente.</small></label><label class="form-field"><span>Comentario o medida interna</span><textarea name="resolution" rows="5" minlength="10" maxlength="1000" required placeholder="Documenta la revisión, el historial de cancelaciones y el acuerdo interno de la base.">${esc(report.resolution)}</textarea></label><button class="primary-button action-wide" type="submit"><span>Guardar revisión privada</span>${icon("check")}</button></form>`);
   }
 
   function tariffModal(tariffId = "") {
@@ -1701,6 +2034,8 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
       case "driver-schedule": await request("updateDriverSchedule", values, { message: "Se actualizó tu horario personal." }); break;
       case "report": await request("createReport", values, { closeModal: true, message: "El sitio y la administración recibieron tu reporte privado." }); break;
       case "resolve-report": await request("resolveReport", values, { closeModal: true, message: "La medida de seguimiento quedó registrada." }); break;
+      case "passenger-report": await request("createPassengerReport", values, { closeModal: true, message: "Tu sitio recibió el reporte privado; el pasajero no puede verlo." }); break;
+      case "resolve-passenger-report": await request("resolvePassengerReport", values, { closeModal: true, message: "La revisión y calificación privada quedaron registradas." }); break;
       case "change-password": await request("changePassword", values, { closeModal: true, message: "Tu contraseña se actualizó." }); break;
       case "master-reset": {
         const result = await request("masterReset", {
@@ -1760,7 +2095,11 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
     if (action === "open-sidebar") { state.sidebar = true; render(); return; }
     if (action === "close-sidebar") { state.sidebar = false; render(); return; }
     if (action === "close-toast") { notifications.innerHTML = ""; return; }
-    if (action === "logout") { void request("logout"); return; }
+    if (action === "logout") {
+      if (state.pushEnabledHere) void disableBrowserPush(true).finally(() => request("logout"));
+      else void request("logout");
+      return;
+    }
     if (action === "close-modal") { closeModal(); return; }
     if (action === "modal-backdrop" && event.target === button) { closeModal(); return; }
     if (action === "open-union-modal") { organizationModal("union"); return; }
@@ -1777,6 +2116,21 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
     if (action === "open-change-password") { changePasswordModal(); return; }
     if (action === "open-report-modal") { reportModal(button.dataset.id || ""); return; }
     if (action === "open-resolve-report") { resolveReportModal(button.dataset.id); return; }
+    if (action === "open-passenger-report-modal") { passengerReportModal(button.dataset.id || ""); return; }
+    if (action === "open-resolve-passenger-report") { resolvePassengerReportModal(button.dataset.id); return; }
+    if (action === "enable-push") { void enableBrowserPush(); return; }
+    if (action === "disable-push") { void disableBrowserPush(); return; }
+    if (action === "mark-notifications-read") {
+      void request("markNotificationsRead", {}, { message: "Todas tus notificaciones quedaron marcadas como leídas." });
+      return;
+    }
+    if (action === "open-notification") {
+      const target = notificationPageFor(button.dataset.page);
+      void request("markNotificationsRead", { notificationId: button.dataset.id }).then((result) => {
+        if (result) { state.page = target; render(); }
+      });
+      return;
+    }
     if (action === "open-demo-seed") { demoSeedModal(); return; }
     if (action === "open-master-reset") { masterResetModal(); return; }
     if (action === "confirm-demo-seed") {
@@ -2035,6 +2389,15 @@ html[data-theme="dark"]{color-scheme:dark;--forest:#8ac8a4;--forest-deep:#77b791
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && state.modal) closeModal();
   });
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type !== "taxi-notification-open" || !state.data) return;
+      state.page = notificationPageFor(event.data.targetPage);
+      if (event.data.notificationId) void request("markNotificationsRead", { notificationId: event.data.notificationId });
+      else render();
+    });
+  }
 
   setInterval(() => {
     if (!state.data || state.modal || state.pending || document.hidden) return;

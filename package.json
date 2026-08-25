@@ -1,9 +1,9 @@
 {
   "name": "taxi-turicato-netlify",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
-  "description": "Sitios y taxis verificados con modo oscuro, pruebas integrales persistentes, reinicio maestro, viajes compartidos y control por base.",
+  "description": "Sitios y taxis verificados con notificaciones Web Push, reportes privados por pasajero, pruebas persistentes y control por base.",
   "engines": {
     "node": ">=20"
   },
